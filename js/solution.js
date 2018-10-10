@@ -18,22 +18,30 @@ const context = canvas.getContext('2d');
 
 const currentImage = document.createElement('img'); // текущее изображение
 
+
+///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
+
 if (sessionStorage.getItem('currentId')) {
-		// запуск приложения с загруженным на сервер изображением
-    storage.start_with_image(); 
+    
+    // запуск приложения с загруженным на сервер изображением
+    storage.start_with_image();
 } else if (window.location.search) {
-		// запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
-		imageLoader.style.display = '';
-		menu.style.display = 'none';
-
-		const searchString = window.location.search;
-		const id = searchString.slice(1);
-
-		sessionStorage.setItem('currentId', id);
-		connection.getCurrentInfo(id);
+    
+    // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
+    imageLoader.style.display = '';
+    menu.style.display = 'none';
+    
+    // помещаем в переменную айдишник изображения, загруженного на сервер
+    const searchString = window.location.search;
+    const id = searchString.slice(1);
+    
+    // запрашиваем у сервера текущие данные по имеющемуся айдишнику
+    connection.getCurrentInfo(id);
+    sessionStorage.setItem('currentId', id);
 } else {
-		// 'первый запуск'
-    storage.initialization(); 
+    
+    // 'первый запуск'
+    storage.initialization();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -117,10 +125,10 @@ function StatesStorage() {
     }
     // функция активации/деактивации работы маркеров форм
     this.changeStateAllMarks = function(value) {
-    	const forms = Array.from(workSpace.querySelectorAll('form'));
-    	forms.forEach(form => {
-    		form.querySelector('.comments__marker-checkbox').disabled = value;
-    	})
+        const forms = Array.from(workSpace.querySelectorAll('form'));
+        forms.forEach(form => {
+            form.querySelector('.comments__marker-checkbox').disabled = value;
+        })
     }
     // 'первый' запуск приложения
     this.initialization = function() {
@@ -140,22 +148,23 @@ function StatesStorage() {
         storage.getPositionMenu;
 
         connection.getCurrentInfo(sessionStorage.getItem('currentId'));
-    		connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
-        
-        return workSpace.insertBefore(currentImage, forUserInfo)
+        connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
+
+        return workSpace.insertBefore(currentImage, forUserInfo);
     }
+    // запуск приложения после перехода по ссылке, полученной из режима 'Поделиться'
     this.setCurrentInfo = function(url) {
-    	currentImage.classList.add('current-image');
-    	currentImage.src = url;
-    	currentImage.addEventListener('load', calculateCanvasSize);
+        currentImage.classList.add('current-image');
+        currentImage.src = url;
+        currentImage.addEventListener('load', calculateCanvasSize);
 
-    	storage.mainState = 'comments';
-    	imageLoader.style.display = 'none';
-    	menu.style.display = '';
+        storage.mainState = 'comments';
+        imageLoader.style.display = 'none';
+        menu.style.display = '';
 
-    	sessionStorage.setItem('currentImage', url);
-    	link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
-    	workSpace.insertBefore(currentImage, forUserInfo);
+        sessionStorage.setItem('currentImage', url);
+        link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
+        workSpace.insertBefore(currentImage, forUserInfo);
     }
     // переменная для хранения комментариев
     this.currentComments = [];
@@ -178,8 +187,8 @@ function Connection() {
 
         // при клике на маркер формы
         form.querySelector('.comments__marker-checkbox').addEventListener('click', e => {
-        	// деактивируем возмжность открытия у всех форм по нажатию на маркер 
-        	storage.changeStateAllMarks(true);
+            // деактивируем возмжность открытия у всех форм по нажатию на маркер 
+            storage.changeStateAllMarks(true);
         });
 
         // при клике на кнопку отправки сообщения
@@ -234,12 +243,12 @@ function Connection() {
                 form.querySelector('.comments__marker-checkbox').checked = false;
                 form.querySelector('.comments__marker-checkbox').disabled = false;
                 // активируем возмжность открытия у всех форм по нажатию на маркер 
-			        	storage.changeStateAllMarks(false);
+                storage.changeStateAllMarks(false);
             } else {
                 // если нет ни того, ни другого, удаляем форму из разметки
                 workSpace.removeChild(form);
                 // активируем возмжность открытия у всех форм по нажатию на маркер 
-			        	storage.changeStateAllMarks(false);
+                storage.changeStateAllMarks(false);
             }
         });
     }
@@ -438,13 +447,13 @@ function Connection() {
     this.openForm = function(e) {
         // проверяем, что событие пришло с области текущего изображения
         if (e.target !== workSpace.querySelector('canvas')) return;
-        
+
         // разрешаем загружать комментарии только в режиме комментирования
         if (storage.mainState !== 'comments') return;
-        
+
         // проверяем налчие активированных форм отправки сообщения 
         const checkActiveForm = Array.from(workSpace.querySelectorAll('form'))
-        		.find(comment => comment[0].checked);
+            .find(comment => comment[0].checked);
         // если есть, то выходим из функции
         if (checkActiveForm) return;
 
@@ -468,8 +477,8 @@ function Connection() {
         fetch(`https://neto-api.herokuapp.com/pic/${id}`)
             .then(data => data.json())
             .then(json => {
-            	fillFormServ(json);
-            	if (window.location.search) storage.setCurrentInfo(json.url);
+                fillFormServ(json);
+                if (window.location.search) storage.setCurrentInfo(json.url);
             })
             .catch(error => console.log(error));
     }
@@ -520,7 +529,7 @@ function Connection() {
     }
     // WebSocket
     this.startWebSocketConnect = function(id) {
-    		const currentid = id;
+        const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         ws.onopen = function() {
             console.info('Установлено вбе-сокет соединение');
@@ -537,7 +546,7 @@ function Connection() {
         ws.onclose = function(e) {
             console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - ${e.reason}`);
             if (e.code === 1006) {
-            	connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
+                connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
             }
         };
     }
@@ -614,13 +623,13 @@ function handleFileSelect(e) {
 
     workSpace.removeChild(input)
 }
-
+// копирование ссылки на изображение в режиме 'Поделиться'
 function copyLinkToShare(e) {
     navigator.clipboard.writeText(link_to_share.value)
         .then(successMessage)
         .catch((er) => console.log('something wrong'))
 }
-
+// уведомление о статусе результата копирования ссылки
 function successMessage() {
     forUserInfo.children[0].textContent = 'Готово';
     forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
@@ -692,6 +701,7 @@ menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.sho
 
 ////////////////////// ШАБЛОНЫ ДИНАМИЧЕСКИ НАПОЛНЯЕМЫХ //////////////
 /////////////////////////// ЭЛЕМЕНТОВ ПРИЛОЖЕНИЯ //////////////
+// шаблон меню
 function menutTmpl(data) {
     return {
         tag: 'ul',
@@ -932,7 +942,7 @@ function menutTmpl(data) {
         ]
     }
 }
-
+// шабон формы комментария
 function commentsFormTmpl() {
     return {
         tag: 'form',
@@ -1004,7 +1014,7 @@ function commentsFormTmpl() {
         ]
     }
 }
-
+// шаблон блока с текстом и датой комментария
 function commentMessageBlockTmpl() {
     return {
         tag: 'div',
