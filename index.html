@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <title>UI</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/styles.css">
+  </head>
+  <body>
+
+     <div class="wrap app" data-state="initial">
+      
+      <div class="error" style="display: none;">
+        <h4 class="error__header">Ошибка</h4>
+        <p class="error__message">Неверный формат файла. Пожалуйста, выберите изображение в формате .jpg или .png.</p>
+      </div>
+      
+      <div class="image-loader" style="display: none;">
+        <div class="loader">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p class="image-loader__message">Загружаю изображение...</p>
+      </div>      
+    
+    </div>
+
+  </body>
+  <script src="./js/solution.js"></script>
+</html>
