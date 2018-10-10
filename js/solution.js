@@ -18,9 +18,23 @@ const context = canvas.getContext('2d');
 
 const currentImage = document.createElement('img'); // текущее изображение
 
-sessionStorage.getItem(`currentImage`) ?
-    storage.start_with_image() : // запуск приложения с загруженным на сервер изображением
-    storage.initialization(); // 'первый запуск'
+if (sessionStorage.getItem('currentId')) {
+		// запуск приложения с загруженным на сервер изображением
+    storage.start_with_image(); 
+} else if (window.location.search) {
+		// запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
+		imageLoader.style.display = '';
+		menu.style.display = 'none';
+
+		const searchString = window.location.search;
+		const id = searchString.slice(1);
+
+		sessionStorage.setItem('currentId', id);
+		connection.getCurrentInfo(id);
+} else {
+		// 'первый запуск'
+    storage.initialization(); 
+}
 
 //////////////////////////////////////////////////////////////////////////
 /////////// ТЕКУЩЕЕ СОСТОЯНИЕ, ХРАНЕНИЕ, ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ ///////////
@@ -121,14 +135,27 @@ function StatesStorage() {
         storage.mainState = sessionStorage.getItem('currentState');
         currentImage.src = sessionStorage.getItem('currentImage');
 
-        link_to_share.setAttribute('value', currentImage.src);
+        link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
         currentImage.addEventListener('load', calculateCanvasSize);
         storage.getPositionMenu;
 
-        connection.getCommentsInfo(sessionStorage.getItem('currentId'));
+        connection.getCurrentInfo(sessionStorage.getItem('currentId'));
     		connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
         
         return workSpace.insertBefore(currentImage, forUserInfo)
+    }
+    this.setCurrentInfo = function(url) {
+    	currentImage.classList.add('current-image');
+    	currentImage.src = url;
+    	currentImage.addEventListener('load', calculateCanvasSize);
+
+    	storage.mainState = 'comments';
+    	imageLoader.style.display = 'none';
+    	menu.style.display = '';
+
+    	sessionStorage.setItem('currentImage', url);
+    	link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
+    	workSpace.insertBefore(currentImage, forUserInfo);
     }
     // переменная для хранения комментариев
     this.currentComments = [];
@@ -436,12 +463,13 @@ function Connection() {
 
         workSpace.appendChild(originalForm);
     }
-    // запрос к серверу на получение данных о загруженном изображении
-    this.getCommentsInfo = function(id) {
+    // запрос к серверу на получение текущих данных по id
+    this.getCurrentInfo = function(id) {
         fetch(`https://neto-api.herokuapp.com/pic/${id}`)
             .then(data => data.json())
             .then(json => {
-                fillFormServ(json);
+            	fillFormServ(json);
+            	if (window.location.search) storage.setCurrentInfo(json.url);
             })
             .catch(error => console.log(error));
     }
@@ -479,7 +507,7 @@ function Connection() {
             })
             .then(img => {
                 img.addEventListener('load', calculateCanvasSize);
-                link_to_share.setAttribute('value', img.src);
+                link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
                 // ссылка на текущее изображение
                 sessionStorage.setItem('currentImage', img.src);
                 imageLoader.style.display = 'none';
@@ -588,7 +616,7 @@ function handleFileSelect(e) {
 }
 
 function copyLinkToShare(e) {
-    navigator.clipboard.writeText(link_to_share)
+    navigator.clipboard.writeText(link_to_share.value)
         .then(successMessage)
         .catch((er) => console.log('something wrong'))
 }
