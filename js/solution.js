@@ -126,7 +126,8 @@ function StatesStorage() {
         storage.getPositionMenu;
 
         connection.getCommentsInfo(sessionStorage.getItem('currentId'));
-        connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
+    		connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
+        
         return workSpace.insertBefore(currentImage, forUserInfo)
     }
     // переменная для хранения комментариев
@@ -491,7 +492,8 @@ function Connection() {
     }
     // WebSocket
     this.startWebSocketConnect = function(id) {
-        const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${id}`);
+    		const currentid = id;
+        const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         ws.onopen = function() {
             console.info('Установлено вбе-сокет соединение');
         };
@@ -506,6 +508,9 @@ function Connection() {
         };
         ws.onclose = function(e) {
             console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - ${e.reason}`);
+            if (e.code === 1006) {
+            	connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
+            }
         };
     }
     // перключатель показа/скрытия маркеров сообщений
