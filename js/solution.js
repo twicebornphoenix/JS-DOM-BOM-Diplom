@@ -93,6 +93,11 @@ function Worker() {
             form.querySelector('.comments__marker-checkbox').disabled = value;
         })
     }
+    this.removeAllCurrentComments = function() {
+        storage.currentComments.forEach(comment => {
+            workSpace.removeChild(comment);
+        })
+    }
 }
 
 
@@ -499,7 +504,7 @@ function Connection() {
         if (!file) return;
 
         // 'очищаем' поле приложения
-        removeAllCurrentComments();
+        worker.removeAllCurrentComments();
         menu.style.display = 'none';
         imageLoader.style.display = '';
         currentImage.style.display = 'none';
@@ -605,11 +610,6 @@ function dragMenu(e) {
 
 
 //////////// ВЫБОР И ПЕРЕДАЧА ЗАГРУЗЧИКУ ФАЙЛА ////////////
-function removeAllCurrentComments() {
-    storage.currentComments.forEach(comment => {
-        workSpace.removeChild(comment);
-    })
-}
 // Drag-and-Drop
 function DnDselect(e) {
     e.preventDefault();
