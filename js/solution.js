@@ -23,30 +23,35 @@ const currentImage = document.createElement('img'); // текущее изобр
 ///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
 
 if (sessionStorage.getItem('currentId')) {
-    
+
     // запуск приложения с загруженным на сервер изображением
     storage.start_with_image();
 } else if (window.location.search) {
-    
+
     // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
     imageLoader.style.display = '';
     menu.style.display = 'none';
-    
+
     // помещаем в переменную айдишник изображения, загруженного на сервер
     const searchString = window.location.search;
     const id = searchString.slice(1);
-    
+
     // запрашиваем у сервера текущие данные по имеющемуся айдишнику
     connection.getCurrentInfo(id);
     sessionStorage.setItem('currentId', id);
 } else {
-    
+
     // 'первый запуск'
     storage.initialization();
 }
 
+
+///////////////////////////////////////////////////////////////////////////
+////////////// ВЫПОЛНЕНИЕ РАЗЛИЧНЫХ ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ///////////////
+///////////////////////////////////////////////////////////////////////////
+// разнорабочий
 function Worker() {
-        // функция-помощник для изменения отображения меню
+    // функция-помощник для изменения отображения меню
     function setDataState(cls, value, init = false) {
         const burger = document.querySelector('.burger');
         if (value === 'default') {
@@ -80,6 +85,13 @@ function Worker() {
                 setDataState('.menu', 'default');
                 break;
         }
+    }
+    // функция активации/деактивации работы маркеров форм
+    this.changeStateAllMarks = function(value) {
+        const forms = Array.from(workSpace.querySelectorAll('form'));
+        forms.forEach(form => {
+            form.querySelector('.comments__marker-checkbox').disabled = value;
+        })
     }
 }
 
@@ -128,13 +140,6 @@ function Storage() {
             }
         }
     });
-    // функция активации/деактивации работы маркеров форм
-    this.changeStateAllMarks = function(value) {
-        const forms = Array.from(workSpace.querySelectorAll('form'));
-        forms.forEach(form => {
-            form.querySelector('.comments__marker-checkbox').disabled = value;
-        })
-    }
     // 'первый' запуск приложения
     this.initialization = function() {
         storage.mainState = 'publish';
@@ -193,7 +198,7 @@ function Connection() {
         // при клике на маркер формы
         form.querySelector('.comments__marker-checkbox').addEventListener('click', e => {
             // деактивируем возмжность открытия у всех форм по нажатию на маркер 
-            storage.changeStateAllMarks(true);
+            worker.changeStateAllMarks(true);
         });
 
         // при клике на кнопку отправки сообщения
@@ -248,12 +253,12 @@ function Connection() {
                 form.querySelector('.comments__marker-checkbox').checked = false;
                 form.querySelector('.comments__marker-checkbox').disabled = false;
                 // активируем возмжность открытия у всех форм по нажатию на маркер 
-                storage.changeStateAllMarks(false);
+                worker.changeStateAllMarks(false);
             } else {
                 // если нет ни того, ни другого, удаляем форму из разметки
                 workSpace.removeChild(form);
                 // активируем возмжность открытия у всех форм по нажатию на маркер 
-                storage.changeStateAllMarks(false);
+                worker.changeStateAllMarks(false);
             }
         });
     }
@@ -463,7 +468,7 @@ function Connection() {
         if (checkActiveForm) return;
 
         // деактивируем возможность открытия формт по нажатия на маркер
-        storage.changeStateAllMarks(true)
+        worker.changeStateAllMarks(true)
 
         const originalForm = createElement(commentsFormTmpl());
         setListenersToForm(originalForm);
