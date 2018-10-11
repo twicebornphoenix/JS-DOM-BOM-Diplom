@@ -2,7 +2,8 @@
 
 //////////////////  ИНИЦИАЛИЗАЦИЯ /////////////////////////////
 const connection = new Connection(); // связной
-const storage = new StatesStorage(); // кладовщик-разнорабочий
+const storage = new Storage(); // кладовщик
+const worker = new Worker(); // разнорабочий
 
 const workSpace = document.querySelector('.app');
 const menu = createElement(menutTmpl());
@@ -44,11 +45,50 @@ if (sessionStorage.getItem('currentId')) {
     storage.initialization();
 }
 
+function Worker() {
+        // функция-помощник для изменения отображения меню
+    function setDataState(cls, value, init = false) {
+        const burger = document.querySelector('.burger');
+        if (value === 'default') {
+            menu.dataset.state = value;
+
+            return;
+        };
+        if (cls === '.burger') burger.style.display = value;
+        document.querySelector(cls).dataset.state = value;
+        menu.dataset.state = init || value;
+    }
+    // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
+    this.changeViewMenu = function() {
+        Array.from(menu.children).forEach(item => item.dataset.state = '');
+        setDataState('.burger', '');
+
+        switch (storage.mainState) {
+            case 'publish':
+                setDataState('.burger', 'none', 'initial');
+                break;
+            case 'share':
+                setDataState('.share', 'selected');
+                break;
+            case 'draw':
+                setDataState('.draw', 'selected');
+                break;
+            case 'comments':
+                setDataState('.comments', 'selected');
+                break;
+            case 'default':
+                setDataState('.menu', 'default');
+                break;
+        }
+    }
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 /////////// ТЕКУЩЕЕ СОСТОЯНИЕ, ХРАНЕНИЕ, ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ ///////////
 //////////////////////////////////////////////////////////////////////////
-
-function StatesStorage() {
+// кладовщик
+function Storage() {
     Object.defineProperties(this, {
         // хранения и запись состояния приложения
         mainState: {
@@ -58,7 +98,7 @@ function StatesStorage() {
             set: function(newV) {
                 const currentAppState = newV;
                 sessionStorage.setItem('currentState', newV);
-                changeViewMenu();
+                worker.changeViewMenu();
             }
         },
         // хранение и запись положения меню
@@ -88,41 +128,6 @@ function StatesStorage() {
             }
         }
     });
-    // функция-помощник для изменения отображения меню
-    function setDataState(cls, value, init = false) {
-        const burger = document.querySelector('.burger');
-        if (value === 'default') {
-            menu.dataset.state = value;
-
-            return;
-        };
-        if (cls === '.burger') burger.style.display = value;
-        document.querySelector(cls).dataset.state = value;
-        menu.dataset.state = init || value;
-    }
-    // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
-    function changeViewMenu() {
-        Array.from(menu.children).forEach(item => item.dataset.state = '');
-        setDataState('.burger', '');
-
-        switch (storage.mainState) {
-            case 'publish':
-                setDataState('.burger', 'none', 'initial');
-                break;
-            case 'share':
-                setDataState('.share', 'selected');
-                break;
-            case 'draw':
-                setDataState('.draw', 'selected');
-                break;
-            case 'comments':
-                setDataState('.comments', 'selected');
-                break;
-            case 'default':
-                setDataState('.menu', 'default');
-                break;
-        }
-    }
     // функция активации/деактивации работы маркеров форм
     this.changeStateAllMarks = function(value) {
         const forms = Array.from(workSpace.querySelectorAll('form'));
@@ -174,7 +179,7 @@ function StatesStorage() {
 ////////////////////////////////////////////////////////////////////////////////////////
 //////////// СВЯЗЬ С СЕРВЕРОМ, ВЕБ-СОКЕТ, ДАННЫЕ, НАПОЛНЕНИЕ ДАННЫМИ ///////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
-
+// связной
 function Connection() {
     const alertMessages = [
         'Чтобы загрузить новое изображение, пожалуйста, воспользуйтесь пунктом "Загрузить новое" в меню',
@@ -487,6 +492,7 @@ function Connection() {
         // передаём выбранный пользователем файл на проверку
         const file = reviewFile(e);
         if (!file) return;
+
         // 'очищаем' поле приложения
         removeAllCurrentComments();
         menu.style.display = 'none';
@@ -599,14 +605,14 @@ function removeAllCurrentComments() {
         workSpace.removeChild(comment);
     })
 }
-
+// Drag-and-Drop
 function DnDselect(e) {
     e.preventDefault();
     const [file] = e.dataTransfer.files;
     console.log(file.size, file.name, file.type)
     connection.onupload(file);
 }
-
+// загрузка файла с помощью input
 function handleFileSelect(e) {
     const input = document.createElement('input');
     input.id = 'files';
