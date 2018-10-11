@@ -6,7 +6,7 @@ const storage = new Storage(); // кладовщик
 const worker = new Worker(); // разнорабочий
 
 const workSpace = document.querySelector('.app');
-const menu = createElement(menutTmpl());
+const menu = worker.createElement(menutTmpl());
 workSpace.prepend(menu);
 const imageLoader = document.querySelector('.image-loader');
 
@@ -63,7 +63,24 @@ function Worker() {
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
+    // функция-строитель динамически наполняемых элементов
+    this.createElement = function(obj) {
+        if (Array.isArray(obj)) {
+            return obj.reduce((f, el) => {
+                f.append(this.createElement(el));
 
+                return f;
+            }, document.createDocumentFragment());
+        }
+        if (typeof obj === 'string') return document.createTextNode(obj)
+        const el = document.createElement(obj.tag);
+        [].concat(obj.cls || []).forEach(clsName => el.classList.add(clsName));
+
+        if (obj.attrs) Object.keys(obj.attrs).forEach(key => el.setAttribute(key, obj.attrs[key]));
+        if (obj.childs) el.appendChild(this.createElement(obj.childs));
+
+        return el;
+    }
     // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
     this.changeViewMenu = function() {
         Array.from(menu.children).forEach(item => item.dataset.state = '');
@@ -94,11 +111,13 @@ function Worker() {
             form.querySelector('.comments__marker-checkbox').disabled = value;
         })
     }
+    // удаление маркеров всех комментариев при перезагрузке
     this.removeAllCurrentComments = function() {
         storage.currentComments.forEach(comment => {
             workSpace.removeChild(comment);
         })
     }
+    // перемещение меню
     this.moveMenu = function(e) {
         // переменные меню
         let centerX, centerY, maxX, maxY;
@@ -189,7 +208,7 @@ function Storage() {
         dragStatus: {
             set: function(newVal) {
                 this.currentDragStatus = newVal;
-            },  
+            },
             get: function() {
                 return this.currentDragStatus;
             }
@@ -327,7 +346,7 @@ function Connection() {
         // помещаем в переменную последний комментарий из полученного архива
         const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`];
         // создаём из шаблона блок сообщений комментария
-        const messageBlock = createElement(commentMessageBlockTmpl());
+        const messageBlock = worker.createElement(commentMessageBlockTmpl());
         // наполняем соответствующие поля блока айдишником, датой, текстом сообщения
         messageBlock.setAttribute('id', commentForPost[0]);
         const messageDate = new Date(commentForPost[1].timestamp).toLocaleString('ru-RU', {
@@ -375,7 +394,7 @@ function Connection() {
             });
 
             // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
-            const messageBlock = createElement(commentMessageBlockTmpl());
+            const messageBlock = worker.createElement(commentMessageBlockTmpl());
             messageBlock.setAttribute('id', id);
             messageBlock.querySelector('.comment__message').textContent = message;
             messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
@@ -391,7 +410,7 @@ function Connection() {
             // если нет
             if (!commentsFormOnImageArea.length) {
                 // создаём первую форму, вешаем на него слушателей событий,
-                const firstCommentsForm = createElement(commentsFormTmpl());
+                const firstCommentsForm = worker.createElement(commentsFormTmpl());
                 setListenersToForm(firstCommentsForm);
 
                 const firstCommentsFormBody = firstCommentsForm.querySelector('.comments__body');
@@ -426,7 +445,7 @@ function Connection() {
                 } else {
                     // если нет, то создаём новую форму по шаблону
                     // и проделываем уже знакомую процедуру
-                    const newCommentsForm = createElement(commentsFormTmpl());
+                    const newCommentsForm = worker.createElement(commentsFormTmpl());
                     setListenersToForm(newCommentsForm);
 
                     const newCommentsFormBody = newCommentsForm.querySelector('.comments__body');
@@ -525,7 +544,7 @@ function Connection() {
         // деактивируем возможность открытия формт по нажатия на маркер
         worker.changeStateAllMarks(true)
 
-        const originalForm = createElement(commentsFormTmpl());
+        const originalForm = worker.createElement(commentsFormTmpl());
         setListenersToForm(originalForm);
 
         originalForm.querySelector('.loader').style.display = 'none';
@@ -680,27 +699,6 @@ function calculateCanvasSize() {
     canvas.style.position = 'relative';
     canvas.style.top = `50%`;
     canvas.style.transform = 'translateY(-50%)';
-}
-
-
-///////////  ФУНКЦИЯ, СОЗДАЮЩАЯ ДИНАМИЧЕСКИ /////////////
-//////////////  НАПОЛНЯЕМЫЕ ЭЛЕМЕНТЫ ////////////////////
-function createElement(obj) {
-    if (Array.isArray(obj)) {
-        return obj.reduce((f, el) => {
-            f.append(createElement(el));
-
-            return f;
-        }, document.createDocumentFragment());
-    }
-    if (typeof obj === 'string') return document.createTextNode(obj)
-    const el = document.createElement(obj.tag);
-    [].concat(obj.cls || []).forEach(clsName => el.classList.add(clsName));
-
-    if (obj.attrs) Object.keys(obj.attrs).forEach(key => el.setAttribute(key, obj.attrs[key]));
-    if (obj.childs) el.appendChild(createElement(obj.childs));
-
-    return el;
 }
 
 
