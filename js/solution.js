@@ -340,13 +340,17 @@ function Connection() {
     function fillFormHandle(data) {
         // из ответа сервера получаем массив комментариев с помощью Object.entries
         const commentsServerInfo = Object.entries(data.comments);
+
         // находим на поле изображения активированную(открытую) форму
         const formToFill = Array.from(workSpace.querySelectorAll('form'))
             .find(form => form.children[1].checked);
+
         // помещаем в переменную последний комментарий из полученного архива
         const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`];
+
         // создаём из шаблона блок сообщений комментария
         const messageBlock = worker.createElement(commentMessageBlockTmpl());
+
         // наполняем соответствующие поля блока айдишником, датой, текстом сообщения
         messageBlock.setAttribute('id', commentForPost[0]);
         const messageDate = new Date(commentForPost[1].timestamp).toLocaleString('ru-RU', {
@@ -359,9 +363,11 @@ function Connection() {
         });
         messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
         messageBlock.querySelector('.comment__message').textContent = commentForPost[1].message;
+
         // помещаем в переменные будущего родителя блока сообщения и элемент, перед которым будет вставлен блок
         const placeForPost = formToFill.querySelectorAll('.comment')[formToFill.querySelectorAll('.comment').length - 1];
         const bodyComment = formToFill.querySelector('.comments__body');
+
         // размещаем блок сообщения внутри родителя перед элементом-соседом
         placeForPost.before(messageBlock);
         storage.currentComments.push(formToFill);
@@ -380,7 +386,7 @@ function Connection() {
 
         // функция наполнения блока сообщений контентом
         function distribCommentsContent(comment) {
-            // деструктурирем
+            // деструктурируем
             let [id, { left, top, timestamp, message }] = comment;
 
             // форматируем дату 
@@ -496,15 +502,19 @@ function Connection() {
         if (file instanceof Event) {
             let check = file.target.files[0];
             if (check instanceof File && (check.type === 'image/jpeg' || check.type === 'image/png')) {
+
                 return file.target.files[0];
             } else {
                 forUserInfo.style.display = '';
+
                 return false;
             }
         } else if (file instanceof File && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+
             return file;
         } else {
             forUserInfo.style.display = '';
+
             return false;
         }
     }
