@@ -63,6 +63,7 @@ function Worker() {
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
+
     // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
     this.changeViewMenu = function() {
         Array.from(menu.children).forEach(item => item.dataset.state = '');
@@ -98,6 +99,46 @@ function Worker() {
             workSpace.removeChild(comment);
         })
     }
+    this.moveMenu = function(e) {
+        // переменные меню
+        let centerX, centerY, maxX, maxY;
+        storage.dragStatus = false;
+
+        // захават меню
+        function catchMenu(e) {
+            const menuCords = menu.getBoundingClientRect();
+            const boodyCords = document.body.getBoundingClientRect();
+            const aimCords = e.target.getBoundingClientRect();
+
+            centerX = aimCords.width / 2;
+            centerY = aimCords.height / 2;
+
+            menu.style.top = menuCords.top + centerY;
+            menu.style.left = menuCords.left + centerX;
+
+            maxX = boodyCords.right - menuCords.width;
+            maxY = boodyCords.bottom - menuCords.height;
+            storage.dragStatus = true;
+        }
+        // перемещение меню
+        function dragMenu(e) {
+            if (!storage.dragStatus) return;
+            let menuX = e.clientX - centerX;
+            let menuY = e.clientY - centerY;
+
+            menuX = Math.min(menuX, maxX);
+            menuY = Math.min(menuY, maxY);
+            menuX = Math.max(menuX, 0);
+            menuY = Math.max(menuY, 0);
+
+            menu.style.setProperty('--menu-top', `${menuY}px`);
+            menu.style.setProperty('--menu-left', `${menuX}px`);
+        }
+        // вешаем 'слушателей'
+        document.querySelector('.drag').addEventListener('mousedown', catchMenu);
+        document.addEventListener('mousemove', dragMenu);
+        document.addEventListener('mouseup', e => storage.dragStatus = false);
+    }
 }
 
 
@@ -121,7 +162,7 @@ function Storage() {
         // хранение и запись положения меню
         getPositionMenu: {
             set: function(e) {
-                if (isDrag) {
+                if (this.dragStatus) {
                     const cords = [e.clientX, e.clientY];
                     sessionStorage.setItem('x, y', cords);
                     menu.style.display = ''
@@ -142,6 +183,15 @@ function Storage() {
                     menu.style.display = ''
 
                 }
+            }
+        },
+        // хранение и запись состояния движения меню
+        dragStatus: {
+            set: function(newVal) {
+                this.currentDragStatus = newVal;
+            },  
+            get: function() {
+                return this.currentDragStatus;
             }
         }
     });
@@ -573,42 +623,6 @@ function Connection() {
     }
 }
 
-/////////// ДВИЖЕНИЕ МЫШИ, ПЕРЕМЕЩЕНИЕ МЕНЮ ///////////////
-let centerX, centerY, maxX, maxY;
-let isDrag = false;
-
-// захават меню
-function catchMenu(e) {
-    const menuCords = menu.getBoundingClientRect();
-    const boodyCords = document.body.getBoundingClientRect();
-    const aimCords = e.target.getBoundingClientRect();
-
-    centerX = aimCords.width / 2;
-    centerY = aimCords.height / 2;
-
-    menu.style.top = menuCords.top + centerY;
-    menu.style.left = menuCords.left + centerX;
-
-    maxX = boodyCords.right - menuCords.width;
-    maxY = boodyCords.bottom - menuCords.height;
-    isDrag = true;
-}
-// перемещение меню
-function dragMenu(e) {
-    if (!isDrag) return;
-    let menuX = e.clientX - centerX;
-    let menuY = e.clientY - centerY;
-
-    menuX = Math.min(menuX, maxX);
-    menuY = Math.min(menuY, maxY);
-    menuX = Math.max(menuX, 0);
-    menuY = Math.max(menuY, 0);
-
-    menu.style.setProperty('--menu-top', `${menuY}px`);
-    menu.style.setProperty('--menu-left', `${menuX}px`);
-}
-
-
 //////////// ВЫБОР И ПЕРЕДАЧА ЗАГРУЗЧИКУ ФАЙЛА ////////////
 // Drag-and-Drop
 function DnDselect(e) {
@@ -691,13 +705,11 @@ function createElement(obj) {
 
 
 //////////////////  EVENTLISTENERS  ////////////////////////
+window.addEventListener('load', worker.moveMenu);
+
 workSpace.addEventListener('dragover', e => e.preventDefault());
 workSpace.addEventListener('drop', DnDselect);
 canvas.addEventListener('click', connection.openForm);
-
-document.querySelector('.drag').addEventListener('mousedown', catchMenu);
-document.addEventListener('mousemove', dragMenu);
-document.addEventListener('mouseup', e => isDrag = false);
 
 menu.addEventListener('mousemove', e => storage.getPositionMenu = e);
 menu.querySelector('.new').addEventListener('click', handleFileSelect, true);
