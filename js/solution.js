@@ -157,6 +157,23 @@ function Worker() {
         document.querySelector('.drag').addEventListener('mousedown', catchMenu);
         document.addEventListener('mousemove', dragMenu);
         document.addEventListener('mouseup', e => storage.dragStatus = false);
+        menu.addEventListener('mousemove', e => storage.getPositionMenu = e);
+    }
+    this.listenStateMenu = function() {
+        // при клике на 'бургер' активируем состояние меню 'default' - возможность выбора режима
+        menu.querySelector('.burger').addEventListener('click', e => storage.mainState = 'default');
+
+        // при клике на 'загрузить новое' открываем окно для выбора файла
+        menu.querySelector('.new').addEventListener('click', handleFileSelect, true);
+
+        // при клике на те или иные кнопки меню активируем соответствующие им режимы
+        menu.querySelector('.comments').addEventListener('click', e => storage.mainState = 'comments');
+        menu.querySelector('.draw').addEventListener('click', e => storage.mainState = 'draw');
+        menu.querySelector('.share').addEventListener('click', e => storage.mainState !== 'share' ? storage.mainState = 'share' : '', true);
+        menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare);
+
+        // переключатель скрыть/показать маркеры комментариев
+        menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments);
     }
 }
 
@@ -714,20 +731,11 @@ function calculateCanvasSize() {
 
 //////////////////  EVENTLISTENERS  ////////////////////////
 window.addEventListener('load', worker.moveMenu);
+window.addEventListener('load', worker.listenStateMenu);
 
 workSpace.addEventListener('dragover', e => e.preventDefault());
 workSpace.addEventListener('drop', DnDselect);
 canvas.addEventListener('click', connection.openForm);
-
-menu.addEventListener('mousemove', e => storage.getPositionMenu = e);
-menu.querySelector('.new').addEventListener('click', handleFileSelect, true);
-menu.querySelector('.burger').addEventListener('click', e => storage.mainState = 'default');
-menu.querySelector('.share').addEventListener('click', e => storage.mainState !== 'share' ? storage.mainState = 'share' : '', true);
-
-menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare);
-menu.querySelector('.draw').addEventListener('click', e => storage.mainState = 'draw');
-menu.querySelector('.comments').addEventListener('click', e => storage.mainState = 'comments');
-menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments);
 
 
 ////////////////////// ШАБЛОНЫ ДИНАМИЧЕСКИ НАПОЛНЯЕМЫХ //////////////
