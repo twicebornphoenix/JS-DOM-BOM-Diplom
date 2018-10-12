@@ -5,15 +5,15 @@ const connection = new Connection(); // связной
 const storage = new Storage(); // кладовщик
 const worker = new Worker(); // разнорабочий
 
-const workSpace = document.querySelector('.app');
-const menu = worker.createElement(menutTmpl());
+const workSpace = document.querySelector('.app'); // 'рабочая область' приложения
+const menu = worker.createElement(menutTmpl()); // меню
 workSpace.prepend(menu);
-const imageLoader = document.querySelector('.image-loader');
 
-const link_to_share = document.querySelector('.menu__url');
-const forUserInfo = document.querySelector('.error');
+const imageLoader = document.querySelector('.image-loader'); // анимация загрузки
+const link_to_share = document.querySelector('.menu__url'); // ссылка 'поделиться'
+const forUserInfo = document.querySelector('.error'); // сообщение об ошибке
 
-const canvas = document.createElement('canvas');
+const canvas = document.createElement('canvas'); // canvas
 workSpace.append(canvas);
 const context = canvas.getContext('2d');
 
@@ -107,6 +107,10 @@ function Worker() {
 
         workSpace.removeChild(input)
     }
+    function calculateMenuCords() {
+    		const menuCords = menu.getBoundingClientRect();
+        storage.getPositionMenu = [menuCords.left, menuCords.top];
+    }
     // функция-строитель динамически наполняемых элементов
     this.createElement = function(obj) {
         if (Array.isArray(obj)) {
@@ -198,15 +202,21 @@ function Worker() {
             menu.style.setProperty('--menu-left', `${menuX}px`);
         }
         // вешаем 'слушателей'
+        menu.addEventListener('mousemove', calculateMenuCords);
+        
         document.querySelector('.drag').addEventListener('mousedown', catchMenu);
         document.addEventListener('mousemove', dragMenu);
         document.addEventListener('mouseup', e => storage.dragStatus = false);
-        menu.addEventListener('mousemove', e => storage.getPositionMenu = e);
+
+        window.addEventListener('resize', storage.getPositionMenu);
     }
     // слушаем события меню
     this.listenStateMenu = function() {
         // при клике на 'бургер' активируем состояние меню 'default' - возможность выбора режима
-        menu.querySelector('.burger').addEventListener('click', e => storage.mainState = 'default');
+        menu.querySelector('.burger').addEventListener('click', e => {
+
+        	storage.mainState = 'default';
+        });
 
         // при клике на 'загрузить новое' открываем окно для выбора файла
         menu.querySelector('.new').addEventListener('click', handleFileSelect, true);
@@ -248,9 +258,8 @@ function Storage() {
         },
         // хранение и запись положения меню
         getPositionMenu: {
-            set: function(e) {
+            set: function(cords) {
                 if (this.dragStatus) {
-                    const cords = [e.clientX, e.clientY];
                     sessionStorage.setItem('x, y', cords);
                     menu.style.display = ''
                 }
@@ -259,12 +268,13 @@ function Storage() {
                 if (sessionStorage.getItem('x, y')) {
                     let [x, y] = sessionStorage.getItem('x, y').split(',');
 
-                    menu.style.setProperty('--menu-left', `${x  - 10.4947}px`);
-                    menu.style.setProperty('--menu-top', `${y - 31.493}px`);
+                    menu.style.setProperty('--menu-left', `${x}px`);
+                    menu.style.setProperty('--menu-top', `${y}px`);
 
                     const cords = menu.getBoundingClientRect();
-                    if (cords.left < 0) menu.style.setProperty('--menu-left', `${0}px`)
-                    if (cords.top < 0) menu.style.setProperty('--menu-top', `${0}px`)
+                    if (cords.left < 0) menu.style.setProperty('--menu-left', `${0}px`);
+                    if (cords.top < 0) menu.style.setProperty('--menu-top', `${0}px`);
+
                     menu.style.display = ''
                 } else {
                     menu.style.display = ''
@@ -737,4 +747,4 @@ function calculateCanvasSize() {
 //////////////////  MAIN_EVENT_LISTENERS  ////////////////////////
 window.addEventListener('load', worker.moveMenu);
 window.addEventListener('load', worker.listenStateMenu);
-window.addEventListener('load', worker.listenLoadFile)
+window.addEventListener('load', worker.listenLoadFile);
