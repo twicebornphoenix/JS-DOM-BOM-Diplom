@@ -83,6 +83,30 @@ function Worker() {
             currentImage.style.display = '';
         }, 1600)
     }
+    // Drag-and-Drop
+    function DnDselect(e) {
+        e.preventDefault();
+        const [file] = e.dataTransfer.files;
+        console.log(file.size, file.name, file.type)
+        connection.onupload(file);
+    }
+    // загрузка файла с помощью input
+    function handleFileSelect(e) {
+        const input = document.createElement('input');
+        input.id = 'files';
+        input.type = 'file';
+        input.accept = 'image/jpeg, image/png';
+        input.addEventListener('change', connection.onupload)
+
+        workSpace.appendChild(input);
+        input.style.display = 'none';
+
+        const ev = document.createEvent('MouseEvents');
+        ev.initMouseEvent('click');
+        input.dispatchEvent(ev);
+
+        workSpace.removeChild(input)
+    }
     // функция-строитель динамически наполняемых элементов
     this.createElement = function(obj) {
         if (Array.isArray(obj)) {
@@ -194,6 +218,11 @@ function Worker() {
 
         // переключатель скрыть/показать маркеры комментариев
         menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments);
+    }
+    this.listenLoadFile = function() {
+        workSpace.addEventListener('dragover', e => e.preventDefault());
+        workSpace.addEventListener('drop', DnDselect);
+        canvas.addEventListener('click', connection.openForm);
     }
 }
 
@@ -689,32 +718,6 @@ function Connection() {
     }
 }
 
-//////////// ВЫБОР И ПЕРЕДАЧА ЗАГРУЗЧИКУ ФАЙЛА ////////////
-// Drag-and-Drop
-function DnDselect(e) {
-    e.preventDefault();
-    const [file] = e.dataTransfer.files;
-    console.log(file.size, file.name, file.type)
-    connection.onupload(file);
-}
-// загрузка файла с помощью input
-function handleFileSelect(e) {
-    const input = document.createElement('input');
-    input.id = 'files';
-    input.type = 'file';
-    input.accept = 'image/jpeg, image/png';
-    input.addEventListener('change', connection.onupload)
-
-    workSpace.appendChild(input);
-    input.style.display = 'none';
-
-    const ev = document.createEvent('MouseEvents');
-    ev.initMouseEvent('click');
-    input.dispatchEvent(ev);
-
-    workSpace.removeChild(input)
-}
-
 
 ////////////////  CANVAS  ///////////////////////////////
 function calculateCanvasSize() {
@@ -732,10 +735,7 @@ function calculateCanvasSize() {
 //////////////////  MAIN_EVENT_LISTENERS  ////////////////////////
 window.addEventListener('load', worker.moveMenu);
 window.addEventListener('load', worker.listenStateMenu);
-
-workSpace.addEventListener('dragover', e => e.preventDefault());
-workSpace.addEventListener('drop', DnDselect);
-canvas.addEventListener('click', connection.openForm);
+window.addEventListener('load', worker.listenLoadFile)
 
 
 ////////////////////// ШАБЛОНЫ ДИНАМИЧЕСКИ НАПОЛНЯЕМЫХ //////////////
