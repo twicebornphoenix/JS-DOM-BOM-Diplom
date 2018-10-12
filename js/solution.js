@@ -63,6 +63,26 @@ function Worker() {
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
+    // копирование ссылки на изображение в режиме 'Поделиться'
+    function copyLinkToShare(e) {
+        navigator.clipboard.writeText(link_to_share.value)
+            .then(successMessage)
+            .catch((er) => console.log('something wrong'))
+    }
+    // уведомление о статусе результата копирования ссылки
+    function successMessage() {
+        forUserInfo.children[0].textContent = 'Готово';
+        forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
+        menu.style.display = 'none';
+        currentImage.style.display = 'none';
+        forUserInfo.style.display = '';
+
+        setTimeout(() => {
+            forUserInfo.style.display = 'none';
+            menu.style.display = '';
+            currentImage.style.display = '';
+        }, 1600)
+    }
     // функция-строитель динамически наполняемых элементов
     this.createElement = function(obj) {
         if (Array.isArray(obj)) {
@@ -273,7 +293,7 @@ function Storage() {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//////////// СВЯЗЬ С СЕРВЕРОМ, ВЕБ-СОКЕТ, ДАННЫЕ, НАПОЛНЕНИЕ ДАННЫМИ ///////////////////
+//////////// ЗАПРОСЫ К СЕРВЕРУ, ВЕБ-СОКЕТ, ЗАГРУЗКА ФАЙЛА, НАПОЛНЕНИЕ ДАННЫМИ //////////
 ////////////////////////////////////////////////////////////////////////////////////////
 // связной
 function Connection() {
@@ -694,26 +714,6 @@ function handleFileSelect(e) {
 
     workSpace.removeChild(input)
 }
-// копирование ссылки на изображение в режиме 'Поделиться'
-function copyLinkToShare(e) {
-    navigator.clipboard.writeText(link_to_share.value)
-        .then(successMessage)
-        .catch((er) => console.log('something wrong'))
-}
-// уведомление о статусе результата копирования ссылки
-function successMessage() {
-    forUserInfo.children[0].textContent = 'Готово';
-    forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
-    menu.style.display = 'none';
-    currentImage.style.display = 'none';
-    forUserInfo.style.display = '';
-
-    setTimeout(() => {
-        forUserInfo.style.display = 'none';
-        menu.style.display = '';
-        currentImage.style.display = '';
-    }, 1600)
-}
 
 
 ////////////////  CANVAS  ///////////////////////////////
@@ -729,7 +729,7 @@ function calculateCanvasSize() {
 }
 
 
-//////////////////  EVENTLISTENERS  ////////////////////////
+//////////////////  MAIN_EVENT_LISTENERS  ////////////////////////
 window.addEventListener('load', worker.moveMenu);
 window.addEventListener('load', worker.listenStateMenu);
 
