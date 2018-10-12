@@ -22,37 +22,29 @@ const currentImage = document.createElement('img'); // текущее изобр
 
 ///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
 
-if (sessionStorage.getItem('currentId')) {
-
-    // запуск приложения с загруженным на сервер изображением
+if (sessionStorage.getItem('currentId')) { // запуск приложения с загруженным на сервер изображением
     storage.start_with_image();
-} else if (window.location.search) {
 
-    // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
+} else if (window.location.search) { // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
     imageLoader.style.display = '';
     menu.style.display = 'none';
 
-    // помещаем в переменную айдишник изображения, загруженного на сервер
-    const searchString = window.location.search;
+    const searchString = window.location.search; // помещаем в переменную айдишник изображения, загруженного на сервер
     const id = searchString.slice(1);
 
-    // запрашиваем у сервера текущие данные по имеющемуся айдишнику
-    connection.getCurrentInfo(id);
+    connection.getCurrentInfo(id); // запрашиваем у сервера текущие данные по имеющемуся айдишнику
     sessionStorage.setItem('currentId', id);
-} else {
 
-    // 'первый запуск'
-    storage.initialization();
+} else {
+    storage.initialization(); // 'первый запуск'
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////// ВЫПОЛНЕНИЕ РАЗЛИЧНЫХ ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ///////////////
 ///////////////////////////////////////////////////////////////////////////
-// разнорабочий
-function Worker() {
-    // функция-помощник для изменения отображения меню
-    function setDataState(cls, value, init = false) {
+function Worker() { // разнорабочий
+    function setDataState(cls, value, init = false) { // функция-помощник для изменения отображения меню
         const burger = document.querySelector('.burger');
         if (value === 'default') {
             menu.dataset.state = value;
@@ -63,14 +55,14 @@ function Worker() {
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
-    // копирование ссылки на изображение в режиме 'Поделиться'
-    function copyLinkToShare(e) {
+
+    function copyLinkToShare(e) { // копирование ссылки на изображение в режиме 'Поделиться'
         navigator.clipboard.writeText(link_to_share.value)
             .then(successMessage)
             .catch((er) => console.log('something wrong'))
     }
-    // уведомление о статусе результата копирования ссылки
-    function successMessage() {
+
+    function successMessage() { // уведомление о статусе результата копирования ссылки
         forUserInfo.children[0].textContent = 'Готово';
         forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
         menu.style.display = 'none';
@@ -83,15 +75,15 @@ function Worker() {
             currentImage.style.display = '';
         }, 1600)
     }
-    // Drag-and-Drop
-    function DnDselect(e) {
+
+    function DnDselect(e) { // Drag-and-Drop
         e.preventDefault();
         const [file] = e.dataTransfer.files;
         console.log(file.size, file.name, file.type)
         connection.onupload(file);
     }
-    // загрузка файла с помощью input
-    function handleFileSelect(e) {
+
+    function handleFileSelect(e) { // загрузка файла с помощью input
         const input = document.createElement('input');
         input.id = 'files';
         input.type = 'file';
@@ -107,12 +99,12 @@ function Worker() {
 
         workSpace.removeChild(input)
     }
-    function calculateMenuCords() {
-    		const menuCords = menu.getBoundingClientRect();
-        storage.getPositionMenu = [menuCords.left, menuCords.top];
+
+    function calculateMenuCords() { // рассчитываем и сохраняем координаты меню
+        const menuCords = menu.getBoundingClientRect();
+        storage.positionMenu = [menuCords.left, menuCords.top, menuCords.width];
     }
-    // функция-строитель динамически наполняемых элементов
-    this.createElement = function(obj) {
+    this.createElement = function(obj) { // функция-строитель динамически наполняемых элементов
         if (Array.isArray(obj)) {
             return obj.reduce((f, el) => {
                 f.append(this.createElement(el));
@@ -129,8 +121,7 @@ function Worker() {
 
         return el;
     }
-    // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
-    this.changeViewMenu = function() {
+    this.changeViewMenu = function() { // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
         Array.from(menu.children).forEach(item => item.dataset.state = '');
         setDataState('.burger', '');
 
@@ -152,27 +143,22 @@ function Worker() {
                 break;
         }
     }
-    // функция активации/деактивации работы маркеров форм
-    this.changeStateAllMarks = function(value) {
+    this.changeStateAllMarks = function(value) { // функция активации/деактивации работы маркеров форм
         const forms = Array.from(workSpace.querySelectorAll('form'));
         forms.forEach(form => {
             form.querySelector('.comments__marker-checkbox').disabled = value;
         })
     }
-    // удаление маркеров всех комментариев при перезагрузке
-    this.removeAllCurrentComments = function() {
+    this.removeAllCurrentComments = function() { // удаление маркеров всех комментариев при перезагрузке
         storage.currentComments.forEach(comment => {
             workSpace.removeChild(comment);
         })
     }
-    // перемещение меню
-    this.moveMenu = function(e) {
-        // переменные меню
-        let centerX, centerY, maxX, maxY;
+    this.moveMenu = function(e) { // перемещение меню
+        let centerX, centerY, maxX, maxY; // переменные меню
         storage.dragStatus = false;
 
-        // захават меню
-        function catchMenu(e) {
+        function catchMenu(e) { // захават меню
             const menuCords = menu.getBoundingClientRect();
             const boodyCords = document.body.getBoundingClientRect();
             const aimCords = e.target.getBoundingClientRect();
@@ -187,8 +173,8 @@ function Worker() {
             maxY = boodyCords.bottom - menuCords.height;
             storage.dragStatus = true;
         }
-        // перемещение меню
-        function dragMenu(e) {
+
+        function dragMenu(e) { // перемещение меню
             if (!storage.dragStatus) return;
             let menuX = e.clientX - centerX;
             let menuY = e.clientY - centerY;
@@ -202,36 +188,30 @@ function Worker() {
             menu.style.setProperty('--menu-left', `${menuX}px`);
         }
         // вешаем 'слушателей'
-        menu.addEventListener('mousemove', calculateMenuCords);
-        
+        menu.addEventListener('mousemove', calculateMenuCords); // рассчитываем и сохраняем текущие координаты меню
         document.querySelector('.drag').addEventListener('mousedown', catchMenu);
         document.addEventListener('mousemove', dragMenu);
         document.addEventListener('mouseup', e => storage.dragStatus = false);
-
-        window.addEventListener('resize', storage.getPositionMenu);
     }
-    // слушаем события меню
-    this.listenStateMenu = function() {
-        // при клике на 'бургер' активируем состояние меню 'default' - возможность выбора режима
-        menu.querySelector('.burger').addEventListener('click', e => {
+    this.listenStateMenu = function() { // слушаем события меню
+        menu.addEventListener('click', e => {
+            let target = e.target; // помещаем в переменную target событие клика 
 
-        	storage.mainState = 'default';
+            if (!(e.target.classList.contains('mode') || e.target.classList.contains('burger')))
+                target = e.target.offsetParent; // определяем вложенность клика
+
+            // при клике на какую-либо кнопку меню активируется соответствующий режим
+            if (target.classList.contains('new')) handleFileSelect(); // загрузка файла через input
+            if (target.classList.contains('burger')) storage.mainState = 'default';
+            if (target.classList.contains('comments')) storage.mainState = 'comments';
+            if (target.classList.contains('draw')) storage.mainState = 'draw';
+            if (target.classList.contains('share')) storage.mainState = 'share';
         });
 
-        // при клике на 'загрузить новое' открываем окно для выбора файла
-        menu.querySelector('.new').addEventListener('click', handleFileSelect, true);
-
-        // при клике на те или иные кнопки меню активируем соответствующие им режимы
-        menu.querySelector('.comments').addEventListener('click', e => storage.mainState = 'comments');
-        menu.querySelector('.draw').addEventListener('click', e => storage.mainState = 'draw');
-        menu.querySelector('.share').addEventListener('click', e => storage.mainState !== 'share' ? storage.mainState = 'share' : '', true);
-        menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare);
-
-        // переключатель скрыть/показать маркеры комментариев
-        menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments);
+        menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare); // копирование ссылки
+        menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments); // переключатель скрыть/показать маркеры комментариев
     }
-    // слушаем события загрузки файла
-    this.listenLoadFile = function() {
+    this.listenLoadFile = function() { // слушаем события загрузки файла
         workSpace.addEventListener('dragover', e => e.preventDefault());
         workSpace.addEventListener('drop', DnDselect);
         canvas.addEventListener('click', connection.openForm);
@@ -242,11 +222,9 @@ function Worker() {
 //////////////////////////////////////////////////////////////////////////
 /////////// ТЕКУЩЕЕ СОСТОЯНИЕ, ХРАНЕНИЕ, ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ ///////////
 //////////////////////////////////////////////////////////////////////////
-// кладовщик
-function Storage() {
+function Storage() { // кладовщик
     Object.defineProperties(this, {
-        // хранения и запись состояния приложения
-        mainState: {
+        mainState: { // хранения и запись состояния приложения
             get: function() {
                 return sessionStorage.getItem('currentState');
             },
@@ -256,10 +234,10 @@ function Storage() {
                 worker.changeViewMenu();
             }
         },
-        // хранение и запись положения меню
-        getPositionMenu: {
+        positionMenu: { // хранение и запись положения меню
             set: function(cords) {
                 if (this.dragStatus) {
+
                     sessionStorage.setItem('x, y', cords);
                     menu.style.display = ''
                 }
@@ -270,20 +248,11 @@ function Storage() {
 
                     menu.style.setProperty('--menu-left', `${x}px`);
                     menu.style.setProperty('--menu-top', `${y}px`);
-
-                    const cords = menu.getBoundingClientRect();
-                    if (cords.left < 0) menu.style.setProperty('--menu-left', `${0}px`);
-                    if (cords.top < 0) menu.style.setProperty('--menu-top', `${0}px`);
-
-                    menu.style.display = ''
-                } else {
-                    menu.style.display = ''
-
                 }
+                menu.style.display = ''
             }
         },
-        // хранение и запись состояния движения меню
-        dragStatus: {
+        dragStatus: { // хранение и запись состояния движения меню
             set: function(newVal) {
                 this.currentDragStatus = newVal;
             },
@@ -292,30 +261,26 @@ function Storage() {
             }
         }
     });
-    // 'первый' запуск приложения
-    this.initialization = function() {
+    this.initialization = function() { // 'первый' запуск приложения
         storage.mainState = 'publish';
         currentImage.classList.add('current-image');
-
         return workSpace.insertBefore(currentImage, forUserInfo)
     }
-    // запуск/перезагрузка приложения с имеющимся изображением
-    this.start_with_image = function() {
+    this.start_with_image = function() { // запуск/перезагрузка приложения с имеющимся изображением
         currentImage.classList.add('current-image');
         storage.mainState = sessionStorage.getItem('currentState');
         currentImage.src = sessionStorage.getItem('currentImage');
 
         link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
         currentImage.addEventListener('load', calculateCanvasSize);
-        storage.getPositionMenu;
+        storage.positionMenu;
 
         connection.getCurrentInfo(sessionStorage.getItem('currentId'));
         connection.startWebSocketConnect(sessionStorage.getItem('currentId'));
 
         return workSpace.insertBefore(currentImage, forUserInfo);
     }
-    // запуск приложения после перехода по ссылке, полученной из режима 'Поделиться'
-    this.setCurrentInfo = function(url) {
+    this.setCurrentInfo = function(url) { // запуск приложения после перехода по ссылке, полученной из режима 'Поделиться'
         currentImage.classList.add('current-image');
         currentImage.src = url;
         currentImage.addEventListener('load', calculateCanvasSize);
@@ -328,106 +293,84 @@ function Storage() {
         link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
         workSpace.insertBefore(currentImage, forUserInfo);
     }
-    // переменная для хранения комментариев
-    this.currentComments = [];
+    this.currentComments = []; // переменная для хранения комментариев
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //////////// ЗАПРОСЫ К СЕРВЕРУ, ВЕБ-СОКЕТ, ЗАГРУЗКА ФАЙЛА, НАПОЛНЕНИЕ ДАННЫМИ //////////
 ////////////////////////////////////////////////////////////////////////////////////////
-// связной
-function Connection() {
+function Connection() { // связной
     const alertMessages = [
         'Чтобы загрузить новое изображение, пожалуйста, воспользуйтесь пунктом "Загрузить новое" в меню',
         'Неверный формат файла. Пожалуйста, выберите изображение в формате .jpg или .png',
         'Произошла внутрення ошибка. Обратитесь к вашему системному администратору'
     ]
-    // установка слушателей событий клика на закрытие формы и на кнопку отправки формы на сервер
-    function setListenersToForm(elem) {
+
+    function setListenersToForm(elem) { // установка слушателей событий клика на закрытие формы и на кнопку отправки формы на сервер
         const form = elem;
 
-        // при клике на маркер формы
-        form.querySelector('.comments__marker-checkbox').addEventListener('click', e => {
-            // деактивируем возмжность открытия у всех форм по нажатию на маркер 
-            worker.changeStateAllMarks(true);
+        form.querySelector('.comments__marker-checkbox').addEventListener('click', e => { // при клике на маркер формы
+            worker.changeStateAllMarks(true); // деактивируем возмжность открытия у всех форм по нажатию на маркер 
         });
 
-        // при клике на кнопку отправки сообщения
-        form.querySelector('.comments__submit').addEventListener('click', e => {
+        form.querySelector('.comments__submit').addEventListener('click', e => { // при клике на кнопку отправки сообщения
             e.preventDefault(); // отменяем дефолтное событие
 
-            // показываем анимацию загрузки
-            form.querySelector('.loader').style.display = '';
-            // помещаем в переменные координаты относительно окна, текст сообщения, id картинки
-            const cords = form.getBoundingClientRect();
+            form.querySelector('.loader').style.display = ''; // показываем анимацию загрузки
+
+            const cords = form.getBoundingClientRect(); // помещаем в переменные координаты относительно окна, текст сообщения, id картинки
             const message = form.querySelector('.comments__input').value;
             const id = sessionStorage.getItem('currentId');
 
-            // кодируем текст сообщения и координаты
-            const body = 'message=' + encodeURIComponent(message) +
+            const body = 'message=' + encodeURIComponent(message) + // кодируем текст сообщения и координаты
                 '&left=' + encodeURIComponent(cords.left) +
                 '&top=' + encodeURIComponent(cords.top);
 
-            // добавляем комментарий к изображению на сервер
-            fetch(`https://neto-api.herokuapp.com/pic/${id}/comments`, {
+            fetch(`https://neto-api.herokuapp.com/pic/${id}/comments`, { // добавляем комментарий к изображению на сервер
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
                     body: body
                 })
-                // получаем ответ с обновленной инфой о картинке
-                .then(data => data.json())
-                // передаём объект ответа функции для обновления комментариев картинки
-                .then(json => {
+                .then(data => data.json()) // получаем ответ с обновленной инфой о картинке
+                .then(json => { // передаём объект ответа функции для обновления комментариев картинки
                     form.querySelector('.loader').style.display = 'none';
                     fillFormHandle(json);
                 })
                 .catch(error => console.log(error));
-            // очищаем текстовое поле
-            form.querySelector('.loader').style.disply = 'none'
+
+            form.querySelector('.loader').style.disply = 'none' // очищаем текстовое поле
             form.querySelector('.comments__input').value = '';
         });
 
-        // при клике на кнопку закрытия
-        form.querySelector('.comments__close').addEventListener('click', e => {
+        form.querySelector('.comments__close').addEventListener('click', e => { // при клике на кнопку закрытия
             e.preventDefault(); // отменяем дефолтное действие
-
-            // проверяем наличие неопубликованного текста в поле отправки сообщения
-            if (form.querySelector('.comments__input').value) {
-                // блокируем закрытие формы
-                form.querySelector('.comments__marker-checkbox').checked = true;
+            if (form.querySelector('.comments__input').value) { // проверяем наличие неопубликованного текста в поле отправки сообщения
+                form.querySelector('.comments__marker-checkbox').checked = true; // блокируем закрытие формы
                 form.querySelector('.comments__marker-checkbox').disabled = true;
-                // проверяем наличие блока с сообщени(-ем)ями
-            } else if (form.querySelector('.comment__message')) {
-                // есть блок  и текстовое поле ввода пусто - деактивируем форму
-                form.querySelector('.comments__marker-checkbox').checked = false;
+
+            } else if (form.querySelector('.comment__message')) { // проверяем наличие блока с сообщени(-ем)ями
+                form.querySelector('.comments__marker-checkbox').checked = false; // есть блок  и текстовое поле ввода пусто - деактивируем форму
                 form.querySelector('.comments__marker-checkbox').disabled = false;
-                // активируем возмжность открытия у всех форм по нажатию на маркер 
-                worker.changeStateAllMarks(false);
+                worker.changeStateAllMarks(false); // активируем возмжность открытия у всех форм по нажатию на маркер 
+
             } else {
-                // если нет ни того, ни другого, удаляем форму из разметки
-                workSpace.removeChild(form);
-                // активируем возмжность открытия у всех форм по нажатию на маркер 
-                worker.changeStateAllMarks(false);
+                workSpace.removeChild(form); // если нет ни того, ни другого, удаляем форму из разметки
+                worker.changeStateAllMarks(false); // активируем возмжность открытия у всех форм по нажатию на маркер 
             }
         });
     }
-    // добавление комментари(-ев)я пользователем
-    function fillFormHandle(data) {
-        // из ответа сервера получаем массив комментариев с помощью Object.entries
+
+    function fillFormHandle(data) { // добавление комментари(-ев)я пользователем
         const commentsServerInfo = Object.entries(data.comments);
 
-        // находим на поле изображения активированную(открытую) форму
         const formToFill = Array.from(workSpace.querySelectorAll('form'))
-            .find(form => form.children[1].checked);
+            .find(form => form.children[1].checked); // находим на поле изображения активированную(открытую) форму
 
-        // помещаем в переменную последний комментарий из полученного архива
-        const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`];
-
-        // создаём из шаблона блок сообщений комментария
-        const messageBlock = worker.createElement(commentMessageBlockTmpl());
+        const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`]; // помещаем в переменную последний комментарий из полученного архива
+        const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём из шаблона блок сообщений комментария
 
         // наполняем соответствующие поля блока айдишником, датой, текстом сообщения
         messageBlock.setAttribute('id', commentForPost[0]);
@@ -453,22 +396,17 @@ function Connection() {
     // размещение ранее добавленных комментариев, полученных от сервера,  по формам, 
     // и дальнейшее размещение форм на поле изображения
     function fillFormServ(data) {
-        // если нет ни одного комментария к изображению, идём курить
-        if (!data.comments) return;
+        if (!data.comments) return; // если нет ни одного комментария к изображению, идём курить
         const comments = Object.entries(data.comments);
 
-        // из полученного архива к каждому элементу(комментарию) применяем функцию
-        comments.forEach(comment => {
+        comments.forEach(comment => { // из полученного архива к каждому элементу(комментарию) применяем функцию
             distribCommentsContent(comment);
         })
 
-        // функция наполнения блока сообщений контентом
-        function distribCommentsContent(comment) {
-            // деструктурируем
+        function distribCommentsContent(comment) { // функция наполнения блока сообщений контентом
             let [id, { left, top, timestamp, message }] = comment;
 
-            // форматируем дату 
-            const messageDate = new Date(timestamp).toLocaleString('ru-RU', {
+            const messageDate = new Date(timestamp).toLocaleString('ru-RU', { // форматируем дату 
                 month: '2-digit',
                 day: '2-digit',
                 year: '2-digit',
@@ -477,23 +415,18 @@ function Connection() {
                 second: '2-digit'
             });
 
-            // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
-            const messageBlock = worker.createElement(commentMessageBlockTmpl());
+            const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
             messageBlock.setAttribute('id', id);
             messageBlock.querySelector('.comment__message').textContent = message;
             messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
 
-            // передаём полученный блок сообщения с координатами формы функции 
-            return distribFormCords(messageBlock, left, top);
+            return distribFormCords(messageBlock, left, top); // передаём полученный блок сообщения с координатами формы функции 
         }
-        // функция поиска или создания нужной формы для полученного блока сообщений
-        function distribFormCords(messageBlock, left, top) {
-            // проверка, есть ли на поле изображения формы
-            const commentsFormOnImageArea = Array.from(workSpace.querySelectorAll('form'));
 
-            // если нет
-            if (!commentsFormOnImageArea.length) {
-                // создаём первую форму, вешаем на него слушателей событий,
+        function distribFormCords(messageBlock, left, top) { // функция поиска или создания нужной формы для полученного блока сообщений
+            const commentsFormOnImageArea = Array.from(workSpace.querySelectorAll('form')); // проверка, есть ли на поле изображения формы
+
+            if (!commentsFormOnImageArea.length) { // если нет, создаём первую форму, вешаем на него слушателей событий
                 const firstCommentsForm = worker.createElement(commentsFormTmpl());
                 setListenersToForm(firstCommentsForm);
 
@@ -501,34 +434,24 @@ function Connection() {
                 const placeBefore = firstCommentsFormBody.querySelectorAll('.comment')[firstCommentsFormBody.querySelectorAll('.comment').length - 1];
 
                 firstCommentsForm.querySelector('.loader').style.display = 'none';
-                // помещаем в неё блок сообщений
-                firstCommentsFormBody.insertBefore(messageBlock, placeBefore);
+                firstCommentsFormBody.insertBefore(messageBlock, placeBefore); // помещаем в неё блок сообщений
 
-                // присваиваем координаты
-                firstCommentsForm.style.left = `${left}px`;
+                firstCommentsForm.style.left = `${left}px`; // присваиваем координаты
                 firstCommentsForm.style.top = `${top}px`
 
-                // размещаем на поле сообщений
-                workSpace.appendChild(firstCommentsForm);
-                // добавляем в массив текущих форм
-                storage.currentComments.push(firstCommentsForm);
+                workSpace.appendChild(firstCommentsForm); // размещаем на поле сообщений
+                storage.currentComments.push(firstCommentsForm); // добавляем в массив текущих форм
 
-            } else {
-                // если формы на поле есть, ищем ту форму, у которой те же координаты, которые
-                // были переданы в функцию
+            } else { // если формы на поле есть, ищем ту форму, у которой те же координаты, которые были переданы в функцию
                 const commentsForm = commentsFormOnImageArea
                     .find(form => parseInt(form.style.left) === left && parseInt(form.style.top) === top)
 
-                // если таковая имеется
-                if (commentsForm) {
-                    // помещаем в неё блок сообщений
+                if (commentsForm) { // если таковая имеется помещаем в неё блок сообщений
                     const commentsFormBody = commentsForm.querySelector('.comments__body');
                     const placeBefore = commentsFormBody.querySelectorAll('.comment')[commentsFormBody.querySelectorAll('.comment').length - 1];
 
                     commentsFormBody.insertBefore(messageBlock, placeBefore);
-                } else {
-                    // если нет, то создаём новую форму по шаблону
-                    // и проделываем уже знакомую процедуру
+                } else { // если нет, то создаём новую форму по шаблону и проделываем уже знакомую процедуру
                     const newCommentsForm = worker.createElement(commentsFormTmpl());
                     setListenersToForm(newCommentsForm);
 
@@ -547,8 +470,8 @@ function Connection() {
             }
         }
     }
-    // проверка файла
-    function reviewFile(f) {
+
+    function reviewFile(f) { // проверка файла
         if ((storage.mainState !== 'publish')) {
             if (f instanceof File) {
                 showAllertMessage('hint');
@@ -575,29 +498,29 @@ function Connection() {
 
         return file;
     }
-    // проверка расширения файла
-    function checkExtension(file) {
+
+    function checkExtension(file) { // проверка расширения файла
         if (file instanceof Event) {
             let check = file.target.files[0];
+
             if (check instanceof File && (check.type === 'image/jpeg' || check.type === 'image/png')) {
 
                 return file.target.files[0];
             } else {
                 forUserInfo.style.display = '';
-
                 return false;
             }
+
         } else if (file instanceof File && (file.type === 'image/jpeg' || file.type === 'image/png')) {
 
             return file;
         } else {
             forUserInfo.style.display = '';
-
             return false;
         }
     }
-    // функция показа ошибки, подказки пользователю
-    function showAllertMessage(txt, error = null) {
+
+    function showAllertMessage(txt, error = null) { // функция показа ошибки, подказки пользователю
         currentImage.style.display = 'none';
         menu.style.display = 'none';
         imageLoader.style.display = 'none'
@@ -617,20 +540,14 @@ function Connection() {
     }
     // активация формы при клике на изображения для добавления нового комментария
     this.openForm = function(e) {
-        // проверяем, что событие пришло с области текущего изображения
-        if (e.target !== workSpace.querySelector('canvas')) return;
+        if (e.target !== workSpace.querySelector('canvas')) return; // проверяем, что событие пришло с области текущего изображения
+        if (storage.mainState !== 'comments') return; // разрешаем загружать комментарии только в режиме комментирования
 
-        // разрешаем загружать комментарии только в режиме комментирования
-        if (storage.mainState !== 'comments') return;
-
-        // проверяем налчие активированных форм отправки сообщения 
         const checkActiveForm = Array.from(workSpace.querySelectorAll('form'))
-            .find(comment => comment[0].checked);
-        // если есть, то выходим из функции
-        if (checkActiveForm) return;
+            .find(comment => comment[0].checked); // проверяем налчие активированных форм отправки сообщения 
+        if (checkActiveForm) return; // если есть, то выходим из функции
 
-        // деактивируем возможность открытия формт по нажатия на маркер
-        worker.changeStateAllMarks(true)
+        worker.changeStateAllMarks(true) // деактивируем возможность открытия формт по нажатия на маркер
 
         const originalForm = worker.createElement(commentsFormTmpl());
         setListenersToForm(originalForm);
@@ -644,8 +561,7 @@ function Connection() {
 
         workSpace.appendChild(originalForm);
     }
-    // запрос к серверу на получение текущих данных по id
-    this.getCurrentInfo = function(id) {
+    this.getCurrentInfo = function(id) { // запрос к серверу на получение текущих данных по id
         fetch(`https://neto-api.herokuapp.com/pic/${id}`)
             .then(data => data.json())
             .then(json => {
@@ -654,34 +570,30 @@ function Connection() {
             })
             .catch(error => console.log(error));
     }
-    // загрузка изображения на сервер
-    this.onupload = function(e) {
-        // передаём выбранный пользователем файл на проверку
-        const file = reviewFile(e);
+    this.onupload = function(e) { // загрузка изображения на сервер
+        const file = reviewFile(e); // передаём выбранный пользователем файл на проверку
         if (!file) return;
 
-        // 'очищаем' поле приложения
-        worker.removeAllCurrentComments();
+        worker.removeAllCurrentComments(); // 'очищаем' поле приложения
         menu.style.display = 'none';
         imageLoader.style.display = '';
         currentImage.style.display = 'none';
 
-        // готовим 'тело' сообщения для загрузки на сервер
-        const formData = new FormData();
+        const formData = new FormData(); // готовим 'тело' сообщения для загрузки на сервер
         formData.append('title', file.name)
         formData.append('image', file);
 
-        // выполняем запрос и загрузку
-        fetch('https://neto-api.herokuapp.com/pic', {
+        fetch('https://neto-api.herokuapp.com/pic', { // выполняем запрос и загрузку
                 body: formData,
                 method: 'POST'
             })
             .then(data => data.json())
             .then(json => {
                 const id = json.id;
-                sessionStorage.setItem('currentId', id)
-                // получили айдишник загруженного изображения
-                connection.startWebSocketConnect(id);
+                sessionStorage.setItem('currentId', id); // получили айдишник загруженного изображения
+
+                connection.startWebSocketConnect(id); // запускаем WebSocket
+
                 currentImage.style.width = '';
                 currentImage.style.height = '';
                 currentImage.src = json.url;
@@ -689,19 +601,18 @@ function Connection() {
             })
             .then(img => {
                 img.addEventListener('load', calculateCanvasSize);
-                link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
                 // ссылка на текущее изображение
+                link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
                 sessionStorage.setItem('currentImage', img.src);
                 imageLoader.style.display = 'none';
                 img.style.display = '';
-                // переключаем режим на "поделиться", меняем отображение меню в соответствии с режимом
-                storage.mainState = 'share';
-                storage.getPositionMenu;
+
+                storage.mainState = 'share'; // переключаем режим на "поделиться", меняем отображение меню в соответствии с режимом
+                storage.positionMenu;
             })
             .catch(error => console.log(error));
     }
-    // WebSocket
-    this.startWebSocketConnect = function(id) {
+    this.startWebSocketConnect = function(id) { // WebSocket
         const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         ws.onopen = function() {
@@ -723,8 +634,7 @@ function Connection() {
             }
         };
     }
-    // перключатель показа/скрытия маркеров сообщений
-    this.showOrhideComments = function(e) {
+    this.showOrhideComments = function(e) { // перключатель показа/скрытия маркеров сообщений
         if (e.target.value === 'on') storage.currentComments.forEach(comment => comment.style.display = 'block')
         if (e.target.value === 'off') storage.currentComments.forEach(comment => comment.style.display = 'none')
     }
