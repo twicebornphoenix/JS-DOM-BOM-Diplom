@@ -1,21 +1,19 @@
 'use strict';
 
 //////////////////  ИНИЦИАЛИЗАЦИЯ /////////////////////////////
-const connection = new Connection(); // связной
-const storage = new Storage(); // кладовщик
-const worker = new Worker(); // разнорабочий
-
 const workSpace = document.querySelector('.app'); // 'рабочая область' приложения
+
+const connection = new Connection(); // связной
+const drawer = new CanvasDrawer(); // художник
+const worker = new Worker(); // разнорабочий
+const storage = new Storage(); // кладовщик
+
 const menu = worker.createElement(menutTmpl()); // меню
 workSpace.prepend(menu);
 
 const imageLoader = document.querySelector('.image-loader'); // анимация загрузки
 const link_to_share = document.querySelector('.menu__url'); // ссылка 'поделиться'
 const forUserInfo = document.querySelector('.error'); // сообщение об ошибке
-
-const canvas = document.createElement('canvas'); // canvas
-workSpace.append(canvas);
-const context = canvas.getContext('2d');
 
 const currentImage = document.createElement('img'); // текущее изображение
 
@@ -214,7 +212,7 @@ function Worker() { // разнорабочий
     this.listenLoadFile = function() { // слушаем события загрузки файла
         workSpace.addEventListener('dragover', e => e.preventDefault());
         workSpace.addEventListener('drop', DnDselect);
-        canvas.addEventListener('click', connection.openForm);
+
     }
 }
 
@@ -272,7 +270,7 @@ function Storage() { // кладовщик
         currentImage.src = sessionStorage.getItem('currentImage');
 
         link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
-        currentImage.addEventListener('load', calculateCanvasSize);
+        currentImage.addEventListener('load', drawer.calculateCanvasSize);
         storage.positionMenu;
 
         connection.getCurrentInfo(sessionStorage.getItem('currentId'));
@@ -283,7 +281,7 @@ function Storage() { // кладовщик
     this.setCurrentInfo = function(url) { // запуск приложения после перехода по ссылке, полученной из режима 'Поделиться'
         currentImage.classList.add('current-image');
         currentImage.src = url;
-        currentImage.addEventListener('load', calculateCanvasSize);
+        currentImage.addEventListener('load', canvas.calculateCanvasSize);
 
         storage.mainState = 'comments';
         imageLoader.style.display = 'none';
@@ -600,7 +598,7 @@ function Connection() { // связной
                 return currentImage;
             })
             .then(img => {
-                img.addEventListener('load', calculateCanvasSize);
+                img.addEventListener('load', drawer.calculateCanvasSize);
                 // ссылка на текущее изображение
                 link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
                 sessionStorage.setItem('currentImage', img.src);
@@ -640,17 +638,25 @@ function Connection() { // связной
     }
 }
 
+/////////////////////////////////////////////////////////////////////
+////////////////////////////  CANVAS  ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+function CanvasDrawer() {
+    const canvas = document.createElement('canvas');
+    workSpace.append(canvas);
+    const context = canvas.getContext('2d');
+    canvas.addEventListener('click', connection.openForm);
 
-////////////////  CANVAS  ///////////////////////////////
-function calculateCanvasSize() {
-    const img = currentImage
-    img.style.height = `90vh`;
+    this.calculateCanvasSize = function() {
+        const img = currentImage
+        img.style.height = `90vh`;
 
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.style.position = 'relative';
-    canvas.style.top = `50%`;
-    canvas.style.transform = 'translateY(-50%)';
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.style.position = 'relative';
+        canvas.style.top = `50%`;
+        canvas.style.transform = 'translateY(-50%)';
+    }
 }
 
 
