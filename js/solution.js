@@ -643,9 +643,29 @@ function Connection() { // связной
 /////////////////////////////////////////////////////////////////////
 function CanvasDrawer() {
     const canvas = document.createElement('canvas');
+    const c = canvas.getContext('2d');
     workSpace.append(canvas);
-    const context = canvas.getContext('2d');
+
     canvas.addEventListener('click', connection.openForm);
+    canvas.addEventListener('mousemove', drawOnImage);
+
+    function startDraw() {
+
+    }
+
+    function stopDraw() {
+    	isDrawing = false;
+    }
+
+    function drawOnImage(e) {
+    	if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
+/*    	if (!e.which) return;	// если левая кнопка не зажата при перемещении курсора, выходим из функции*/
+    	i
+    	if (isDrawig) {
+    			console.log(e.clientX, e.clientY);
+    			c.beginPath();
+    	}
+    }
 
     this.calculateCanvasSize = function() {
         const img = currentImage
