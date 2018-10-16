@@ -200,6 +200,7 @@ function Worker() { // разнорабочий
 
             // при клике на какую-либо кнопку меню активируется соответствующий режим
             if (target.classList.contains('new')) handleFileSelect(); // загрузка файла через input
+            // основные режимы
             if (target.classList.contains('burger')) storage.mainState = 'default';
             if (target.classList.contains('comments')) storage.mainState = 'comments';
             if (target.classList.contains('draw')) storage.mainState = 'draw';
@@ -536,8 +537,7 @@ function Connection() { // связной
                 break;
         }
     }
-    // активация формы при клике на изображения для добавления нового комментария
-    this.openForm = function(e) {
+    this.openForm = function(e) { // активация формы при клике на изображения для добавления нового комментария
         if (e.target !== workSpace.querySelector('canvas')) return; // проверяем, что событие пришло с области текущего изображения
         if (storage.mainState !== 'comments') return; // разрешаем загружать комментарии только в режиме комментирования
 
@@ -617,16 +617,17 @@ function Connection() { // связной
             console.info('Установлено вбе-сокет соединение');
         };
         ws.onmessage = function(e) {
-            const wsData = e.data;
-            if (wsData.pic) console.log(`Информация о картинке - ${wsData.pic}`);
-            if (wsData.comment) console.log(`Информация о комментах - ${wsData.comment}`);
-            if (wsData.mask) console.log(`Информация о маске - ${wsData.mask}`)
+            const wsData = JSON.parse(e.data);
+
+            if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
+            if (wsData.comment) console.log(`Информация о комментах - `, wsData.comment);
+            if (wsData.mask) console.log(`Информация о маске - `, wsData.mask);
         };
         ws.onerror = function(e) {
             console.warn(`Произошла ошибка - ${e.error}`);
         };
         ws.onclose = function(e) {
-            console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - ${e.reason}`);
+            console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - `, e.reason);
             if (e.code === 1006) {
                 connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
             }
@@ -649,22 +650,23 @@ function CanvasDrawer() {
     canvas.addEventListener('click', connection.openForm);
     canvas.addEventListener('mousemove', drawOnImage);
 
-    function startDraw() {
-
-    }
-
-    function stopDraw() {
-    	isDrawing = false;
-    }
-
     function drawOnImage(e) {
-    	if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
-/*    	if (!e.which) return;	// если левая кнопка не зажата при перемещении курсора, выходим из функции*/
-    	i
-    	if (isDrawig) {
-    			console.log(e.clientX, e.clientY);
-    			c.beginPath();
-    	}
+        if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
+        if (!e.which) return; // если левая кнопка не зажата при перемещении курсора, выходим из функции
+
+        const lineSize = 4; // постоянная толщина пера
+        let selectedColor = Array.from(menu.querySelectorAll('.menu__color')).find(color => color.checked);
+     		// определяем цвет пера
+        if (selectedColor.classList.contains('red')) c.strokeStyle = '#ea5d56';
+        if (selectedColor.classList.contains('yellow')) c.strokeStyle = '#f3d135';
+        if (selectedColor.classList.contains('green')) c.strokeStyle = '#6cbe47';
+        if (selectedColor.classList.contains('blue')) c.strokeStyle = '#53a7f5';
+        if (selectedColor.classList.contains('purple')) c.strokeStyle = '#b36ade';
+
+        c.beginPath();
+        c.lineWidth = lineSize;
+        c.arc(e.clientX, e.clientY, 50, 0, Math.PI * 2, false);
+        c.stroke();
     }
 
     this.calculateCanvasSize = function() {
