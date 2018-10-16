@@ -1,47 +1,12 @@
 'use strict';
 
-//////////////////  ИНИЦИАЛИЗАЦИЯ /////////////////////////////
-const workSpace = document.querySelector('.app'); // 'рабочая область' приложения
-
-const connection = new Connection(); // связной
-const drawer = new CanvasDrawer(); // художник
-const worker = new Worker(); // разнорабочий
-const storage = new Storage(); // кладовщик
-
-const menu = worker.createElement(menutTmpl()); // меню
-workSpace.prepend(menu);
-
-const imageLoader = document.querySelector('.image-loader'); // анимация загрузки
-const link_to_share = document.querySelector('.menu__url'); // ссылка 'поделиться'
-const forUserInfo = document.querySelector('.error'); // сообщение об ошибке
-
-const currentImage = document.createElement('img'); // текущее изображение
-
-
-///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
-
-if (sessionStorage.getItem('currentId')) { // запуск приложения с загруженным на сервер изображением
-    storage.start_with_image();
-
-} else if (window.location.search) { // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
-    imageLoader.style.display = '';
-    menu.style.display = 'none';
-
-    const searchString = window.location.search; // помещаем в переменную айдишник изображения, загруженного на сервер
-    const id = searchString.slice(1);
-
-    connection.getCurrentInfo(id); // запрашиваем у сервера текущие данные по имеющемуся айдишнику
-    sessionStorage.setItem('currentId', id);
-
-} else {
-    storage.initialization(); // 'первый запуск'
-}
-
-
 ///////////////////////////////////////////////////////////////////////////
 ////////////// ВЫПОЛНЕНИЕ РАЗЛИЧНЫХ ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ///////////////
 ///////////////////////////////////////////////////////////////////////////
 function Worker() { // разнорабочий
+    let centerX, centerY, maxX, maxY; // переменные меню
+    storage.dragStatus = false;
+
     function setDataState(cls, value, init = false) { // функция-помощник для изменения отображения меню
         const burger = document.querySelector('.burger');
         if (value === 'default') {
@@ -102,6 +67,22 @@ function Worker() { // разнорабочий
         const menuCords = menu.getBoundingClientRect();
         storage.positionMenu = [menuCords.left, menuCords.top, menuCords.width];
     }
+
+    function catchMenu(e) { // 'хватаем' меню
+        const menuCords = menu.getBoundingClientRect();
+        const boodyCords = document.body.getBoundingClientRect();
+        const aimCords = e.target.getBoundingClientRect();
+
+        centerX = aimCords.width / 2;
+        centerY = aimCords.height / 2;
+
+        menu.style.top = menuCords.top + centerY;
+        menu.style.left = menuCords.left + centerX;
+
+        maxX = boodyCords.right - menuCords.width;
+        maxY = boodyCords.bottom - menuCords.height;
+        storage.dragStatus = true;
+    }
     this.createElement = function(obj) { // функция-строитель динамически наполняемых элементов
         if (Array.isArray(obj)) {
             return obj.reduce((f, el) => {
@@ -153,43 +134,18 @@ function Worker() { // разнорабочий
         })
     }
     this.moveMenu = function(e) { // перемещение меню
-        let centerX, centerY, maxX, maxY; // переменные меню
-        storage.dragStatus = false;
+        if (!storage.dragStatus) return;
 
-        function catchMenu(e) { // захават меню
-            const menuCords = menu.getBoundingClientRect();
-            const boodyCords = document.body.getBoundingClientRect();
-            const aimCords = e.target.getBoundingClientRect();
+        let menuX = e.clientX - centerX;
+        let menuY = e.clientY - centerY;
 
-            centerX = aimCords.width / 2;
-            centerY = aimCords.height / 2;
+        menuX = Math.min(menuX, maxX);
+        menuY = Math.min(menuY, maxY);
+        menuX = Math.max(menuX, 0);
+        menuY = Math.max(menuY, 0);
 
-            menu.style.top = menuCords.top + centerY;
-            menu.style.left = menuCords.left + centerX;
-
-            maxX = boodyCords.right - menuCords.width;
-            maxY = boodyCords.bottom - menuCords.height;
-            storage.dragStatus = true;
-        }
-
-        function dragMenu(e) { // перемещение меню
-            if (!storage.dragStatus) return;
-            let menuX = e.clientX - centerX;
-            let menuY = e.clientY - centerY;
-
-            menuX = Math.min(menuX, maxX);
-            menuY = Math.min(menuY, maxY);
-            menuX = Math.max(menuX, 0);
-            menuY = Math.max(menuY, 0);
-
-            menu.style.setProperty('--menu-top', `${menuY}px`);
-            menu.style.setProperty('--menu-left', `${menuX}px`);
-        }
-        // вешаем 'слушателей'
-        menu.addEventListener('mousemove', calculateMenuCords); // рассчитываем и сохраняем текущие координаты меню
-        document.querySelector('.drag').addEventListener('mousedown', catchMenu);
-        document.addEventListener('mousemove', dragMenu);
-        document.addEventListener('mouseup', e => storage.dragStatus = false);
+        menu.style.setProperty('--menu-top', `${menuY}px`);
+        menu.style.setProperty('--menu-left', `${menuX}px`);
     }
     this.listenStateMenu = function() { // слушаем события меню
         menu.addEventListener('click', e => {
@@ -209,11 +165,15 @@ function Worker() { // разнорабочий
 
         menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare); // копирование ссылки
         menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments); // переключатель скрыть/показать маркеры комментариев
+        menu.addEventListener('mousemove', calculateMenuCords); // рассчитываем и сохраняем текущие координаты меню
+
+        document.querySelector('.drag').addEventListener('mousedown', catchMenu);
+        document.addEventListener('mousemove', worker.moveMenu);
+        document.addEventListener('mouseup', e => storage.dragStatus = false);
     }
     this.listenLoadFile = function() { // слушаем события загрузки файла
         workSpace.addEventListener('dragover', e => e.preventDefault());
         workSpace.addEventListener('drop', DnDselect);
-
     }
 }
 
@@ -537,6 +497,15 @@ function Connection() { // связной
                 break;
         }
     }
+
+    function wsOnMessage(e) {
+        const wsData = JSON.parse(e.data);
+
+        if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
+        if (wsData.comment) console.log(`Информация о комментах - `, wsData.comment);
+        if (wsData.mask) console.log(`Информация о маске - `, wsData.mask);
+
+    }
     this.openForm = function(e) { // активация формы при клике на изображения для добавления нового комментария
         if (e.target !== workSpace.querySelector('canvas')) return; // проверяем, что событие пришло с области текущего изображения
         if (storage.mainState !== 'comments') return; // разрешаем загружать комментарии только в режиме комментирования
@@ -613,25 +582,22 @@ function Connection() { // связной
     this.startWebSocketConnect = function(id) { // WebSocket
         const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
-        ws.onopen = function() {
-            console.info('Установлено вбе-сокет соединение');
-        };
-        ws.onmessage = function(e) {
-            const wsData = JSON.parse(e.data);
+        ws.addEventListener('message', wsOnMessage);
 
-            if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
-            if (wsData.comment) console.log(`Информация о комментах - `, wsData.comment);
-            if (wsData.mask) console.log(`Информация о маске - `, wsData.mask);
-        };
-        ws.onerror = function(e) {
-            console.warn(`Произошла ошибка - ${e.error}`);
-        };
-        ws.onclose = function(e) {
+        ws.addEventListener('laod', e => ws.send('test string'));
+
+        ws.addEventListener('open', e => {
+            console.log('Установлено веб-сокет соединение');
+        });
+        ws.addEventListener('error', e => {
+            console.warn('Произошла ошибка - ', e.error);
+        });
+        ws.addEventListener('close', e => {
             console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - `, e.reason);
             if (e.code === 1006) {
-                connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
+                connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`)
             }
-        };
+        });
     }
     this.showOrhideComments = function(e) { // перключатель показа/скрытия маркеров сообщений
         if (e.target.value === 'on') storage.currentComments.forEach(comment => comment.style.display = 'block')
@@ -642,33 +608,50 @@ function Connection() { // связной
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////  CANVAS  ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
-function CanvasDrawer() {
+function CanvasDrawer() { // художник
     const canvas = document.createElement('canvas');
     const c = canvas.getContext('2d');
+    const lineSize = 4; // постоянная толщина пера
+    const radius = 50;
+    let x = 100;
+    let y = 100;
+    let dx = 4;
+    let dy = 16;
     workSpace.append(canvas);
 
     canvas.addEventListener('click', connection.openForm);
     canvas.addEventListener('mousemove', drawOnImage);
 
-    function drawOnImage(e) {
-        if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
-        if (!e.which) return; // если левая кнопка не зажата при перемещении курсора, выходим из функции
-
-        const lineSize = 4; // постоянная толщина пера
+    function checkSelectedColor() { // определяем цвет пера
         let selectedColor = Array.from(menu.querySelectorAll('.menu__color')).find(color => color.checked);
-     		// определяем цвет пера
+
         if (selectedColor.classList.contains('red')) c.strokeStyle = '#ea5d56';
         if (selectedColor.classList.contains('yellow')) c.strokeStyle = '#f3d135';
         if (selectedColor.classList.contains('green')) c.strokeStyle = '#6cbe47';
         if (selectedColor.classList.contains('blue')) c.strokeStyle = '#53a7f5';
         if (selectedColor.classList.contains('purple')) c.strokeStyle = '#b36ade';
+    }
+
+    function drawOnImage(e) { // рисуем на холсте
+        // if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
+        // if (!e.which) return; // если левая кнопка не зажата при перемещении курсора, выходим из функции
+
+        // checkSelectedColor();
+
+        // requestAnimationFrame(drawOnImage);
+        c.clearRect(0, 0, innerWidth, innerHeight); // очищаем контекст
 
         c.beginPath();
         c.lineWidth = lineSize;
-        c.arc(e.clientX, e.clientY, 50, 0, Math.PI * 2, false);
+        c.arc(x, y, radius, 0, Math.PI * 2, false);
         c.stroke();
-    }
 
+        if (x + radius > canvas.width || x - radius < 0) dx = -dx;
+        if (y + radius > canvas.height || y - radius < 0) dy = -dy;
+
+        x += dx;
+        y += dy;
+    }
     this.calculateCanvasSize = function() {
         const img = currentImage
         img.style.height = `90vh`;
@@ -681,8 +664,50 @@ function CanvasDrawer() {
     }
 }
 
+///////////////////////////////////////////////////////////////
+//////////////////  ИНИЦИАЛИЗАЦИЯ /////////////////////////////
+///////////////////////////////////////////////////////////////
+const workSpace = document.querySelector('.app'); // 'рабочая область' приложения
 
+const connection = new Connection(); // связной
+const drawer = new CanvasDrawer(); // художник
+const storage = new Storage(); // кладовщик
+const worker = new Worker(); // разнорабочий
+
+const menu = worker.createElement(menutTmpl()); // меню
+workSpace.prepend(menu);
+
+const imageLoader = document.querySelector('.image-loader'); // анимация загрузки
+const link_to_share = document.querySelector('.menu__url'); // ссылка 'поделиться'
+const forUserInfo = document.querySelector('.error'); // сообщение об ошибке
+
+const currentImage = document.createElement('img'); // текущее изображение
+
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+if (sessionStorage.getItem('currentId')) { // запуск приложения с загруженным на сервер изображением
+    storage.start_with_image();
+
+} else if (window.location.search) { // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
+    imageLoader.style.display = '';
+    menu.style.display = 'none';
+
+    const searchString = window.location.search; // помещаем в переменную айдишник изображения, загруженного на сервер
+    const id = searchString.slice(1);
+
+    connection.getCurrentInfo(id); // запрашиваем у сервера текущие данные по имеющемуся айдишнику
+    sessionStorage.setItem('currentId', id);
+
+} else {
+    storage.initialization(); // 'первый запуск'
+}
+
+
+//////////////////////////////////////////////////////////////////
 //////////////////  MAIN_EVENT_LISTENERS  ////////////////////////
+//////////////////////////////////////////////////////////////////
 window.addEventListener('load', worker.moveMenu);
 window.addEventListener('load', worker.listenStateMenu);
 window.addEventListener('load', worker.listenLoadFile);
