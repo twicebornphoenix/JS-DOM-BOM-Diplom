@@ -18,13 +18,11 @@ function Worker() { // разнорабочий
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
-
     function copyLinkToShare(e) { // копирование ссылки на изображение в режиме 'Поделиться'
         navigator.clipboard.writeText(link_to_share.value)
             .then(successMessage)
             .catch((er) => console.log('something wrong'))
     }
-
     function successMessage() { // уведомление о статусе результата копирования ссылки
         forUserInfo.children[0].textContent = 'Готово';
         forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
@@ -38,14 +36,12 @@ function Worker() { // разнорабочий
             currentImage.style.display = '';
         }, 1600)
     }
-
     function DnDselect(e) { // Drag-and-Drop
         e.preventDefault();
         const [file] = e.dataTransfer.files;
         console.log(file.size, file.name, file.type)
         connection.onupload(file);
     }
-
     function handleFileSelect(e) { // загрузка файла с помощью input
         const input = document.createElement('input');
         input.id = 'files';
@@ -62,12 +58,10 @@ function Worker() { // разнорабочий
 
         workSpace.removeChild(input)
     }
-
     function calculateMenuCords() { // рассчитываем и сохраняем координаты меню
         const menuCords = menu.getBoundingClientRect();
         storage.positionMenu = [menuCords.left, menuCords.top, menuCords.width];
     }
-
     function catchMenu(e) { // 'хватаем' меню
         const menuCords = menu.getBoundingClientRect();
         const boodyCords = document.body.getBoundingClientRect();
@@ -121,6 +115,16 @@ function Worker() { // разнорабочий
                 setDataState('.menu', 'default');
                 break;
         }
+    }
+    this.formatDate = function(timestamp) {
+        return new Date(timestamp).toLocaleString('ru-RU', {
+            month: '2-digit',
+            day: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     }
     this.changeStateAllMarks = function(value) { // функция активации/деактивации работы маркеров форм
         const forms = Array.from(workSpace.querySelectorAll('form'));
@@ -321,7 +325,6 @@ function Connection() { // связной
             }
         });
     }
-
     function fillFormHandle(data) { // добавление комментари(-ев)я пользователем
         const commentsServerInfo = Object.entries(data.comments);
 
@@ -333,14 +336,8 @@ function Connection() { // связной
 
         // наполняем соответствующие поля блока айдишником, датой, текстом сообщения
         messageBlock.setAttribute('id', commentForPost[0]);
-        const messageDate = new Date(commentForPost[1].timestamp).toLocaleString('ru-RU', {
-            month: '2-digit',
-            day: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
+
+        const messageDate = worker.formatDate(commentForPost[1].timestamp);
         messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
         messageBlock.querySelector('.comment__message').textContent = commentForPost[1].message;
 
@@ -365,15 +362,7 @@ function Connection() { // связной
         function distribCommentsContent(comment) { // функция наполнения блока сообщений контентом
             let [id, { left, top, timestamp, message }] = comment;
 
-            const messageDate = new Date(timestamp).toLocaleString('ru-RU', { // форматируем дату 
-                month: '2-digit',
-                day: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-
+            const messageDate = worker.formatDate(timestamp);
             const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
             messageBlock.setAttribute('id', id);
             messageBlock.querySelector('.comment__message').textContent = message;
@@ -429,7 +418,6 @@ function Connection() { // связной
             }
         }
     }
-
     function reviewFile(f) { // проверка файла
         if ((storage.mainState !== 'publish')) {
             if (f instanceof File) {
@@ -457,7 +445,6 @@ function Connection() { // связной
 
         return file;
     }
-
     function checkExtension(file) { // проверка расширения файла
         if (file instanceof Event) {
             let check = file.target.files[0];
@@ -478,7 +465,6 @@ function Connection() { // связной
             return false;
         }
     }
-
     function showAllertMessage(txt, error = null) { // функция показа ошибки, подказки пользователю
         currentImage.style.display = 'none';
         menu.style.display = 'none';
@@ -497,14 +483,11 @@ function Connection() { // связной
                 break;
         }
     }
-
     function wsOnMessage(e) {
         const wsData = JSON.parse(e.data);
-
         if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
         if (wsData.comment) console.log(`Информация о комментах - `, wsData.comment);
         if (wsData.mask) console.log(`Информация о маске - `, wsData.mask);
-
     }
     this.openForm = function(e) { // активация формы при клике на изображения для добавления нового комментария
         if (e.target !== workSpace.querySelector('canvas')) return; // проверяем, что событие пришло с области текущего изображения
@@ -582,21 +565,14 @@ function Connection() { // связной
     this.startWebSocketConnect = function(id) { // WebSocket
         const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
+        
         ws.addEventListener('message', wsOnMessage);
-
         ws.addEventListener('laod', e => ws.send('test string'));
-
-        ws.addEventListener('open', e => {
-            console.log('Установлено веб-сокет соединение');
-        });
-        ws.addEventListener('error', e => {
-            console.warn('Произошла ошибка - ', e.error);
-        });
+        ws.addEventListener('open', e => console.log('Установлено веб-сокет соединение'));
+        ws.addEventListener('error', e => console.warn('Произошла ошибка - ', e.error));
         ws.addEventListener('close', e => {
             console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - `, e.reason);
-            if (e.code === 1006) {
-                connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`)
-            }
+            if (e.code === 1006)  connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         });
     }
     this.showOrhideComments = function(e) { // перключатель показа/скрытия маркеров сообщений
