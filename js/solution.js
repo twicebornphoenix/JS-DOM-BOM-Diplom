@@ -18,11 +18,13 @@ function Worker() { // разнорабочий
         document.querySelector(cls).dataset.state = value;
         menu.dataset.state = init || value;
     }
+
     function copyLinkToShare(e) { // копирование ссылки на изображение в режиме 'Поделиться'
         navigator.clipboard.writeText(link_to_share.value)
             .then(successMessage)
             .catch((er) => console.log('something wrong'))
     }
+
     function successMessage() { // уведомление о статусе результата копирования ссылки
         forUserInfo.children[0].textContent = 'Готово';
         forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
@@ -36,12 +38,14 @@ function Worker() { // разнорабочий
             currentImage.style.display = '';
         }, 1600)
     }
+
     function DnDselect(e) { // Drag-and-Drop
         e.preventDefault();
         const [file] = e.dataTransfer.files;
         console.log(file.size, file.name, file.type)
         connection.onupload(file);
     }
+
     function handleFileSelect(e) { // загрузка файла с помощью input
         const input = document.createElement('input');
         input.id = 'files';
@@ -58,10 +62,12 @@ function Worker() { // разнорабочий
 
         workSpace.removeChild(input)
     }
+
     function calculateMenuCords() { // рассчитываем и сохраняем координаты меню
         const menuCords = menu.getBoundingClientRect();
         storage.positionMenu = [menuCords.left, menuCords.top, menuCords.width];
     }
+
     function catchMenu(e) { // 'хватаем' меню
         const menuCords = menu.getBoundingClientRect();
         const boodyCords = document.body.getBoundingClientRect();
@@ -76,6 +82,17 @@ function Worker() { // разнорабочий
         maxX = boodyCords.right - menuCords.width;
         maxY = boodyCords.bottom - menuCords.height;
         storage.dragStatus = true;
+    }
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString('ru-RU', {
+            month: '2-digit',
+            day: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     }
     this.createElement = function(obj) { // функция-строитель динамически наполняемых элементов
         if (Array.isArray(obj)) {
@@ -93,6 +110,31 @@ function Worker() { // разнорабочий
         if (obj.childs) el.appendChild(this.createElement(obj.childs));
 
         return el;
+    }
+
+    this.getCommentsBlockMessage = function(id, message, timestamp) {
+        const messageDate = formatDate(timestamp);
+        const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
+        
+        messageBlock.setAttribute('id', id);
+        messageBlock.querySelector('.comment__message').textContent = message;
+        messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
+        
+        return messageBlock;
+    }
+    this.getCommentsForm = function(messageBlock, left, top) {
+    		const newForm = worker.createElement(commentsFormTmpl());
+
+				 const newFormBody = newForm.querySelector('.comments__body');
+				 const placeBefore = newFormBody.querySelectorAll('.comment')[newFormBody.querySelectorAll('.comment').length - 1];
+
+				 newForm.querySelector('.loader').style.display = 'none';
+				 newFormBody.insertBefore(messageBlock, placeBefore); // помещаем в неё блок сообщений
+
+				 newForm.style.left = `${left}px`; // присваиваем координаты
+				 newForm.style.top = `${top}px`
+
+				 workSpace.appendChild(newForm); // размещаем на поле сообщений
     }
     this.changeViewMenu = function() { // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
         Array.from(menu.children).forEach(item => item.dataset.state = '');
@@ -115,16 +157,6 @@ function Worker() { // разнорабочий
                 setDataState('.menu', 'default');
                 break;
         }
-    }
-    this.formatDate = function(timestamp) {
-        return new Date(timestamp).toLocaleString('ru-RU', {
-            month: '2-digit',
-            day: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
     }
     this.changeStateAllMarks = function(value) { // функция активации/деактивации работы маркеров форм
         const forms = Array.from(workSpace.querySelectorAll('form'));
@@ -325,6 +357,8 @@ function Connection() { // связной
             }
         });
     }
+
+
     function fillFormHandle(data) { // добавление комментари(-ев)я пользователем
         const commentsServerInfo = Object.entries(data.comments);
 
@@ -332,15 +366,9 @@ function Connection() { // связной
             .find(form => form.children[1].checked); // находим на поле изображения активированную(открытую) форму
 
         const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`]; // помещаем в переменную последний комментарий из полученного архива
-        const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём из шаблона блок сообщений комментария
-
-        // наполняем соответствующие поля блока айдишником, датой, текстом сообщения
-        messageBlock.setAttribute('id', commentForPost[0]);
-
-        const messageDate = worker.formatDate(commentForPost[1].timestamp);
-        messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
-        messageBlock.querySelector('.comment__message').textContent = commentForPost[1].message;
-
+        
+        const messageBlock = worker.getCommentsBlockMessage(commentForPost[0], commentForPost[1].message, commentForPost[1].timestamp);
+        
         // помещаем в переменные будущего родителя блока сообщения и элемент, перед которым будет вставлен блок
         const placeForPost = formToFill.querySelectorAll('.comment')[formToFill.querySelectorAll('.comment').length - 1];
         const bodyComment = formToFill.querySelector('.comments__body');
@@ -361,13 +389,8 @@ function Connection() { // связной
 
         function distribCommentsContent(comment) { // функция наполнения блока сообщений контентом
             let [id, { left, top, timestamp, message }] = comment;
-
-            const messageDate = worker.formatDate(timestamp);
-            const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
-            messageBlock.setAttribute('id', id);
-            messageBlock.querySelector('.comment__message').textContent = message;
-            messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
-
+            const messageBlock = worker.getCommentsBlockMessage(id, message, timestamp);
+            
             return distribFormCords(messageBlock, left, top); // передаём полученный блок сообщения с координатами формы функции 
         }
 
@@ -375,20 +398,10 @@ function Connection() { // связной
             const commentsFormOnImageArea = Array.from(workSpace.querySelectorAll('form')); // проверка, есть ли на поле изображения формы
 
             if (!commentsFormOnImageArea.length) { // если нет, создаём первую форму, вешаем на него слушателей событий
-                const firstCommentsForm = worker.createElement(commentsFormTmpl());
-                setListenersToForm(firstCommentsForm);
 
-                const firstCommentsFormBody = firstCommentsForm.querySelector('.comments__body');
-                const placeBefore = firstCommentsFormBody.querySelectorAll('.comment')[firstCommentsFormBody.querySelectorAll('.comment').length - 1];
-
-                firstCommentsForm.querySelector('.loader').style.display = 'none';
-                firstCommentsFormBody.insertBefore(messageBlock, placeBefore); // помещаем в неё блок сообщений
-
-                firstCommentsForm.style.left = `${left}px`; // присваиваем координаты
-                firstCommentsForm.style.top = `${top}px`
-
-                workSpace.appendChild(firstCommentsForm); // размещаем на поле сообщений
-                storage.currentComments.push(firstCommentsForm); // добавляем в массив текущих форм
+                const newForm = worker.getCommentsForm(messageBlock, left, top);
+    						setListenersToForm(newForm);
+                storage.currentComments.push(newForm); // добавляем в массив текущих форм
 
             } else { // если формы на поле есть, ищем ту форму, у которой те же координаты, которые были переданы в функцию
                 const commentsForm = commentsFormOnImageArea
@@ -418,6 +431,7 @@ function Connection() { // связной
             }
         }
     }
+
     function reviewFile(f) { // проверка файла
         if ((storage.mainState !== 'publish')) {
             if (f instanceof File) {
@@ -445,6 +459,7 @@ function Connection() { // связной
 
         return file;
     }
+
     function checkExtension(file) { // проверка расширения файла
         if (file instanceof Event) {
             let check = file.target.files[0];
@@ -465,6 +480,7 @@ function Connection() { // связной
             return false;
         }
     }
+
     function showAllertMessage(txt, error = null) { // функция показа ошибки, подказки пользователю
         currentImage.style.display = 'none';
         menu.style.display = 'none';
@@ -483,6 +499,7 @@ function Connection() { // связной
                 break;
         }
     }
+
     function wsOnMessage(e) {
         const wsData = JSON.parse(e.data);
         if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
@@ -565,14 +582,14 @@ function Connection() { // связной
     this.startWebSocketConnect = function(id) { // WebSocket
         const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
-        
+
         ws.addEventListener('message', wsOnMessage);
         ws.addEventListener('laod', e => ws.send('test string'));
         ws.addEventListener('open', e => console.log('Установлено веб-сокет соединение'));
         ws.addEventListener('error', e => console.warn('Произошла ошибка - ', e.error));
         ws.addEventListener('close', e => {
             console.warn(`Веб-сокет соединение закрыто. Код - ${e.code}, причина - `, e.reason);
-            if (e.code === 1006)  connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
+            if (e.code === 1006) connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         });
     }
     this.showOrhideComments = function(e) { // перключатель показа/скрытия маркеров сообщений
@@ -588,15 +605,28 @@ function CanvasDrawer() { // художник
     const canvas = document.createElement('canvas');
     const c = canvas.getContext('2d');
     const lineSize = 4; // постоянная толщина пера
-    const radius = 50;
-    let x = 100;
-    let y = 100;
-    let dx = 4;
-    let dy = 16;
-    workSpace.append(canvas);
+    let isDrawing = false;
 
-    canvas.addEventListener('click', connection.openForm);
-    canvas.addEventListener('mousemove', drawOnImage);
+    workSpace.append(canvas);
+    listenToCanvas();
+
+    function listenToCanvas() {
+        canvas.addEventListener('click', connection.openForm);
+        canvas.addEventListener('mousemove', drawOnImage);
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        c.closePath();
+    }
+
+    function startDrawing(e) {
+        isDrawing = true;
+        c.beginPath();
+        c.moveTo(e.clientX, e.clientY);
+    }
 
     function checkSelectedColor() { // определяем цвет пера
         let selectedColor = Array.from(menu.querySelectorAll('.menu__color')).find(color => color.checked);
@@ -606,27 +636,19 @@ function CanvasDrawer() { // художник
         if (selectedColor.classList.contains('green')) c.strokeStyle = '#6cbe47';
         if (selectedColor.classList.contains('blue')) c.strokeStyle = '#53a7f5';
         if (selectedColor.classList.contains('purple')) c.strokeStyle = '#b36ade';
+
+        return c.strokeStyle;
     }
 
     function drawOnImage(e) { // рисуем на холсте
-        // if (storage.mainState !== 'draw') return; // если режим не 'рисование', выходим из функции
-        // if (!e.which) return; // если левая кнопка не зажата при перемещении курсора, выходим из функции
+        c.lineWidth = 4;
+        c.strokeStyle = checkSelectedColor();
+        c.lineCap = c.lineJoin = 'round';
 
-        // checkSelectedColor();
-
-        // requestAnimationFrame(drawOnImage);
-        c.clearRect(0, 0, innerWidth, innerHeight); // очищаем контекст
-
-        c.beginPath();
-        c.lineWidth = lineSize;
-        c.arc(x, y, radius, 0, Math.PI * 2, false);
-        c.stroke();
-
-        if (x + radius > canvas.width || x - radius < 0) dx = -dx;
-        if (y + radius > canvas.height || y - radius < 0) dy = -dy;
-
-        x += dx;
-        y += dy;
+        if (storage.mainState === 'draw' && isDrawing) {
+            c.lineTo(e.clientX, e.clientY);
+            c.stroke();
+        }
     }
     this.calculateCanvasSize = function() {
         const img = currentImage
