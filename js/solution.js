@@ -1,13 +1,10 @@
 'use strict';
 
-///////////////////////////////////////////////////////////////////////////
-////////////// ВЫПОЛНЕНИЕ РАЗЛИЧНЫХ ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ///////////////
-///////////////////////////////////////////////////////////////////////////
-function Worker() { // разнорабочий
-    let centerX, centerY, maxX, maxY; // переменные меню
+function Worker() { 
+    let centerX, centerY, maxX, maxY; 
     storage.dragStatus = false;
 
-    function setDataState(cls, value, init = false) { // функция-помощник для изменения отображения меню
+    function setDataState(cls, value, init = false) { 
         const burger = document.querySelector('.burger');
         if (value === 'default') {
             menu.dataset.state = value;
@@ -19,13 +16,13 @@ function Worker() { // разнорабочий
         menu.dataset.state = init || value;
     }
 
-    function copyLinkToShare(e) { // копирование ссылки на изображение в режиме 'Поделиться'
+    function copyLinkToShare(e) { 
         navigator.clipboard.writeText(link_to_share.value)
             .then(successMessage)
             .catch((er) => console.log('something wrong'))
     }
 
-    function successMessage() { // уведомление о статусе результата копирования ссылки
+    function successMessage() { 
         forUserInfo.children[0].textContent = 'Готово';
         forUserInfo.children[1].textContent = 'Ссылка скопирована в буфер обмена';
         menu.style.display = 'none';
@@ -39,14 +36,14 @@ function Worker() { // разнорабочий
         }, 1600)
     }
 
-    function DnDselect(e) { // Drag-and-Drop
+    function DnDselect(e) { 
         e.preventDefault();
         const [file] = e.dataTransfer.files;
         console.log(file.size, file.name, file.type)
         connection.onupload(file);
     }
 
-    function handleFileSelect(e) { // загрузка файла с помощью input
+    function handleFileSelect(e) { 
         const input = document.createElement('input');
         input.id = 'files';
         input.type = 'file';
@@ -63,12 +60,12 @@ function Worker() { // разнорабочий
         workSpace.removeChild(input)
     }
 
-    function calculateMenuCords() { // рассчитываем и сохраняем координаты меню
+    function calculateMenuCords() { 
         const menuCords = menu.getBoundingClientRect();
         storage.positionMenu = [menuCords.left, menuCords.top, menuCords.width];
     }
 
-    function catchMenu(e) { // 'хватаем' меню
+    function catchMenu(e) { 
         const menuCords = menu.getBoundingClientRect();
         const boodyCords = document.body.getBoundingClientRect();
         const aimCords = e.target.getBoundingClientRect();
@@ -94,7 +91,7 @@ function Worker() { // разнорабочий
             second: '2-digit'
         });
     }
-    this.createElement = function(obj) { // функция-строитель динамически наполняемых элементов
+    this.createElement = function(obj) { 
         if (Array.isArray(obj)) {
             return obj.reduce((f, el) => {
                 f.append(this.createElement(el));
@@ -114,29 +111,32 @@ function Worker() { // разнорабочий
 
     this.getCommentsBlockMessage = function(id, message, timestamp) {
         const messageDate = formatDate(timestamp);
-        const messageBlock = worker.createElement(commentMessageBlockTmpl()); // создаём блок сообщений, присваиваем айдишник, вписываем дату и текст сообщения
-        
+        const messageBlock = worker.createElement(commentMessageBlockTmpl()); 
+
         messageBlock.setAttribute('id', id);
         messageBlock.querySelector('.comment__message').textContent = message;
         messageBlock.querySelector('.comment__time').textContent = messageDate.split(', ').join(' ');
-        
+
         return messageBlock;
     }
     this.getCommentsForm = function(messageBlock, left, top) {
         const newForm = worker.createElement(commentsFormTmpl());
+        connection.setListenersToForm(newForm);
 
-         const newFormBody = newForm.querySelector('.comments__body');
-         const placeBefore = newFormBody.querySelectorAll('.comment')[newFormBody.querySelectorAll('.comment').length - 1];
+        const newFormBody = newForm.querySelector('.comments__body');
+        const placeBefore = newFormBody.querySelectorAll('.comment')[newFormBody.querySelectorAll('.comment').length - 1];
 
-         newForm.querySelector('.loader').style.display = 'none';
-         newFormBody.insertBefore(messageBlock, placeBefore); // помещаем в неё блок сообщений
+        newForm.querySelector('.loader').style.display = 'none';
+        newFormBody.insertBefore(messageBlock, placeBefore); 
 
-         newForm.style.left = `${left}px`; // присваиваем координаты
-         newForm.style.top = `${top}px`
+        newForm.style.left = `${left}px`; 
+        newForm.style.top = `${top}px`
 
-         workSpace.appendChild(newForm); // размещаем на поле сообщений
+        workSpace.appendChild(newForm); 
+        storage.currentComments.push(newForm);
     }
-    this.changeViewMenu = function() { // функция, изменяющая отображение меню в соответствии с текущим состоянием приложения
+    this.changeViewMenu = function() {
+        storage.mainState === 'comments' ? worker.changeStateAllMarks(false) : worker.changeStateAllMarks(true);
         Array.from(menu.children).forEach(item => item.dataset.state = '');
         setDataState('.burger', '');
 
@@ -158,18 +158,18 @@ function Worker() { // разнорабочий
                 break;
         }
     }
-    this.changeStateAllMarks = function(value) { // функция активации/деактивации работы маркеров форм
+    this.changeStateAllMarks = function(value) { 
         const forms = Array.from(workSpace.querySelectorAll('form'));
         forms.forEach(form => {
             form.querySelector('.comments__marker-checkbox').disabled = value;
         })
     }
-    this.removeAllCurrentComments = function() { // удаление маркеров всех комментариев при перезагрузке
+    this.removeAllCurrentComments = function() { 
         storage.currentComments.forEach(comment => {
             workSpace.removeChild(comment);
         })
     }
-    this.moveMenu = function(e) { // перемещение меню
+    this.moveMenu = function(e) { 
         if (!storage.dragStatus) return;
 
         let menuX = e.clientX - centerX;
@@ -183,25 +183,25 @@ function Worker() { // разнорабочий
         menu.style.setProperty('--menu-top', `${menuY}px`);
         menu.style.setProperty('--menu-left', `${menuX}px`);
     }
-    this.listenStateMenu = function() { // слушаем события меню
+    this.listenStateMenu = function() { 
         menu.addEventListener('click', e => {
-            let target = e.target; // помещаем в переменную target событие клика 
+            let target = e.target; 
 
             if (!(e.target.classList.contains('mode') || e.target.classList.contains('burger')))
-                target = e.target.offsetParent; // определяем вложенность клика
+                target = e.target.offsetParent; 
 
-            // при клике на какую-либо кнопку меню активируется соответствующий режим
-            if (target.classList.contains('new')) handleFileSelect(); // загрузка файла через input
-            // основные режимы
+            if (target.classList.contains('new')) handleFileSelect(); 
+            
             if (target.classList.contains('burger')) storage.mainState = 'default';
             if (target.classList.contains('comments')) storage.mainState = 'comments';
             if (target.classList.contains('draw')) storage.mainState = 'draw';
             if (target.classList.contains('share')) storage.mainState = 'share';
+            if (target.classList.contains('draw-tools')) drawer.changeColor(e);
         });
 
-        menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare); // копирование ссылки
-        menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments); // переключатель скрыть/показать маркеры комментариев
-        menu.addEventListener('mousemove', calculateMenuCords); // рассчитываем и сохраняем текущие координаты меню
+        menu.querySelector('.menu_copy').addEventListener('click', copyLinkToShare);
+        menu.querySelector('.menu__toggle-bg').addEventListener('change', connection.showOrhideComments); 
+        menu.addEventListener('mousemove', calculateMenuCords); 
 
         document.querySelector('.drag').addEventListener('mousedown', catchMenu);
         document.addEventListener('mousemove', worker.moveMenu);
@@ -213,13 +213,9 @@ function Worker() { // разнорабочий
     }
 }
 
-
-//////////////////////////////////////////////////////////////////////////
-/////////// ТЕКУЩЕЕ СОСТОЯНИЕ, ХРАНЕНИЕ, ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ ///////////
-//////////////////////////////////////////////////////////////////////////
-function Storage() { // кладовщик
+function Storage() { 
     Object.defineProperties(this, {
-        mainState: { // хранения и запись состояния приложения
+        mainState: { 
             get: function() {
                 return sessionStorage.getItem('currentState');
             },
@@ -229,7 +225,7 @@ function Storage() { // кладовщик
                 worker.changeViewMenu();
             }
         },
-        positionMenu: { // хранение и запись положения меню
+        positionMenu: { 
             set: function(cords) {
                 if (this.dragStatus) {
 
@@ -247,7 +243,7 @@ function Storage() { // кладовщик
                 menu.style.display = ''
             }
         },
-        dragStatus: { // хранение и запись состояния движения меню
+        dragStatus: { 
             set: function(newVal) {
                 this.currentDragStatus = newVal;
             },
@@ -256,12 +252,12 @@ function Storage() { // кладовщик
             }
         }
     });
-    this.initialization = function() { // 'первый' запуск приложения
+    this.initialization = function() { 
         storage.mainState = 'publish';
         currentImage.classList.add('current-image');
         return workSpace.insertBefore(currentImage, forUserInfo)
     }
-    this.start_with_image = function() { // запуск/перезагрузка приложения с имеющимся изображением
+    this.start_with_image = function() { 
         currentImage.classList.add('current-image');
         storage.mainState = sessionStorage.getItem('currentState');
         currentImage.src = sessionStorage.getItem('currentImage');
@@ -275,10 +271,11 @@ function Storage() { // кладовщик
 
         return workSpace.insertBefore(currentImage, forUserInfo);
     }
-    this.setCurrentInfo = function(url) { // запуск приложения после перехода по ссылке, полученной из режима 'Поделиться'
+    this.setCurrentInfo = function(url) { 
         currentImage.classList.add('current-image');
         currentImage.src = url;
-        currentImage.addEventListener('load', canvas.calculateCanvasSize);
+        
+        currentImage.addEventListener('load', drawer.calculateCanvasSize);
 
         storage.mainState = 'comments';
         imageLoader.style.display = 'none';
@@ -288,151 +285,70 @@ function Storage() { // кладовщик
         link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
         workSpace.insertBefore(currentImage, forUserInfo);
     }
-    this.currentComments = []; // переменная для хранения комментариев
+    this.currentComments = []; 
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////
-//////////// ЗАПРОСЫ К СЕРВЕРУ, ВЕБ-СОКЕТ, ЗАГРУЗКА ФАЙЛА, НАПОЛНЕНИЕ ДАННЫМИ //////////
-////////////////////////////////////////////////////////////////////////////////////////
-function Connection() { // связной
+function Connection() { 
     const alertMessages = [
         'Чтобы загрузить новое изображение, пожалуйста, воспользуйтесь пунктом "Загрузить новое" в меню',
         'Неверный формат файла. Пожалуйста, выберите изображение в формате .jpg или .png',
         'Произошла внутрення ошибка. Обратитесь к вашему системному администратору'
     ]
 
-    function setListenersToForm(elem) { // установка слушателей событий клика на закрытие формы и на кнопку отправки формы на сервер
-        const form = elem;
-
-        form.querySelector('.comments__marker-checkbox').addEventListener('click', e => { // при клике на маркер формы
-            worker.changeStateAllMarks(true); // деактивируем возмжность открытия у всех форм по нажатию на маркер 
-        });
-
-        form.querySelector('.comments__submit').addEventListener('click', e => { // при клике на кнопку отправки сообщения
-            e.preventDefault(); // отменяем дефолтное событие
-
-            form.querySelector('.loader').style.display = ''; // показываем анимацию загрузки
-
-            const cords = form.getBoundingClientRect(); // помещаем в переменные координаты относительно окна, текст сообщения, id картинки
-            const message = form.querySelector('.comments__input').value;
-            const id = sessionStorage.getItem('currentId');
-
-            const body = 'message=' + encodeURIComponent(message) + // кодируем текст сообщения и координаты
-                '&left=' + encodeURIComponent(cords.left) +
-                '&top=' + encodeURIComponent(cords.top);
-
-            fetch(`https://neto-api.herokuapp.com/pic/${id}/comments`, { // добавляем комментарий к изображению на сервер
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: body
-                })
-                .then(data => data.json()) // получаем ответ с обновленной инфой о картинке
-                .then(json => { // передаём объект ответа функции для обновления комментариев картинки
-                    form.querySelector('.loader').style.display = 'none';
-                    fillFormHandle(json);
-                })
-                .catch(error => console.log(error));
-
-            form.querySelector('.loader').style.disply = 'none' // очищаем текстовое поле
-            form.querySelector('.comments__input').value = '';
-        });
-
-        form.querySelector('.comments__close').addEventListener('click', e => { // при клике на кнопку закрытия
-            e.preventDefault(); // отменяем дефолтное действие
-            if (form.querySelector('.comments__input').value) { // проверяем наличие неопубликованного текста в поле отправки сообщения
-                form.querySelector('.comments__marker-checkbox').checked = true; // блокируем закрытие формы
-                form.querySelector('.comments__marker-checkbox').disabled = true;
-
-            } else if (form.querySelector('.comment__message')) { // проверяем наличие блока с сообщени(-ем)ями
-                form.querySelector('.comments__marker-checkbox').checked = false; // есть блок  и текстовое поле ввода пусто - деактивируем форму
-                form.querySelector('.comments__marker-checkbox').disabled = false;
-                worker.changeStateAllMarks(false); // активируем возмжность открытия у всех форм по нажатию на маркер 
-
-            } else {
-                workSpace.removeChild(form); // если нет ни того, ни другого, удаляем форму из разметки
-                worker.changeStateAllMarks(false); // активируем возмжность открытия у всех форм по нажатию на маркер 
-            }
-        });
-    }
-
-
-    function fillFormHandle(data) { // добавление комментари(-ев)я пользователем
-        const commentsServerInfo = Object.entries(data.comments);
-
-        const formToFill = Array.from(workSpace.querySelectorAll('form'))
-            .find(form => form.children[1].checked); // находим на поле изображения активированную(открытую) форму
-
-        const commentForPost = commentsServerInfo[`${commentsServerInfo.length - 1}`]; // помещаем в переменную последний комментарий из полученного архива
-        
-        const messageBlock = worker.getCommentsBlockMessage(commentForPost[0], commentForPost[1].message, commentForPost[1].timestamp);
-        
-        // помещаем в переменные будущего родителя блока сообщения и элемент, перед которым будет вставлен блок
+    function fillFormHandle(data) {  
+        const formToFill = Array.from(workSpace.querySelectorAll('form')).find(form => form.querySelector('.comments__marker-checkbox').checked);
+        const messageBlock = worker.getCommentsBlockMessage(data.id, data.message, data.timestamp);      
         const placeForPost = formToFill.querySelectorAll('.comment')[formToFill.querySelectorAll('.comment').length - 1];
-        const bodyComment = formToFill.querySelector('.comments__body');
-
-        // размещаем блок сообщения внутри родителя перед элементом-соседом
+        const bodyComment = formToFill.querySelector('.comments__body');  
         placeForPost.before(messageBlock);
-        storage.currentComments.push(formToFill);
     }
-    // размещение ранее добавленных комментариев, полученных от сервера,  по формам, 
-    // и дальнейшее размещение форм на поле изображения
+    
     function fillFormServ(data) {
-        if (!data.comments) return; // если нет ни одного комментария к изображению, идём курить
         const comments = Object.entries(data.comments);
-
-        comments.forEach(comment => { // из полученного архива к каждому элементу(комментарию) применяем функцию
+        comments.forEach(comment => {
             distribCommentsContent(comment);
         })
 
-        function distribCommentsContent(comment) { // функция наполнения блока сообщений контентом
-            let [id, { left, top, timestamp, message }] = comment;
-            const messageBlock = worker.getCommentsBlockMessage(id, message, timestamp);
-            
-            return distribFormCords(messageBlock, left, top); // передаём полученный блок сообщения с координатами формы функции 
+        function getLastElement(parent, cls) {
+            return parent.querySelectorAll(`.${cls}`)[parent.querySelectorAll(`.${cls}`).length - 1];
         }
 
-        function distribFormCords(messageBlock, left, top) { // функция поиска или создания нужной формы для полученного блока сообщений
-            const commentsFormOnImageArea = Array.from(workSpace.querySelectorAll('form')); // проверка, есть ли на поле изображения формы
+        function distribCommentsContent(comment) {
+            let [id, { left, top, timestamp, message }] = comment;
+            const messageBlock = worker.getCommentsBlockMessage(id, message, timestamp);
+            distribFormCords(messageBlock, left, top);
+        }
 
-            if (!commentsFormOnImageArea.length) { // если нет, создаём первую форму, вешаем на него слушателей событий
-
+        function distribFormCords(messageBlock, left, top) {
+            const commentsFormOnImageArea = Array.from(workSpace.querySelectorAll('form'));
+            if (!commentsFormOnImageArea.length) {
                 const newForm = worker.getCommentsForm(messageBlock, left, top);
-                setListenersToForm(newForm);
-                storage.currentComments.push(newForm); // добавляем в массив текущих форм
-
-            } else { // если формы на поле есть, ищем ту форму, у которой те же координаты, которые были переданы в функцию
+            } else {
                 const commentsForm = commentsFormOnImageArea
-                    .find(form => parseInt(form.style.left) === left && parseInt(form.style.top) === top)
-
-                if (commentsForm) { // если таковая имеется помещаем в неё блок сообщений
+                    .find(form => parseInt(form.style.left) === Math.floor(left) && parseInt(form.style.top) === Math.floor(top));
+                if (commentsForm) {
                     const commentsFormBody = commentsForm.querySelector('.comments__body');
-                    const placeBefore = commentsFormBody.querySelectorAll('.comment')[commentsFormBody.querySelectorAll('.comment').length - 1];
-
+                    const placeBefore = getLastElement(commentsFormBody, 'comment');
                     commentsFormBody.insertBefore(messageBlock, placeBefore);
-                } else { // если нет, то создаём новую форму по шаблону и проделываем уже знакомую процедуру
+                } else {
                     const newCommentsForm = worker.createElement(commentsFormTmpl());
-                    setListenersToForm(newCommentsForm);
-
+                    connection.setListenersToForm(newCommentsForm);
                     const newCommentsFormBody = newCommentsForm.querySelector('.comments__body');
-                    const placeBefore = newCommentsFormBody.querySelectorAll('.comment')[newCommentsFormBody.querySelectorAll('.comment').length - 1];
+                    const placeBefore = getLastElement(newCommentsFormBody, 'comment');
 
                     newCommentsForm.querySelector('.loader').style.display = 'none';
                     newCommentsFormBody.insertBefore(messageBlock, placeBefore);
-
                     newCommentsForm.style.left = `${left}px`;
                     newCommentsForm.style.top = `${top}px`;
 
-                    workSpace.appendChild(newCommentsForm);
+                    workSpace.appendChild(newCommentsForm)
                     storage.currentComments.push(newCommentsForm);
                 }
             }
         }
     }
 
-    function reviewFile(f) { // проверка файла
+    function reviewFile(f) {
         if ((storage.mainState !== 'publish')) {
             if (f instanceof File) {
                 showAllertMessage('hint');
@@ -460,7 +376,7 @@ function Connection() { // связной
         return file;
     }
 
-    function checkExtension(file) { // проверка расширения файла
+    function checkExtension(file) { 
         if (file instanceof Event) {
             let check = file.target.files[0];
 
@@ -481,7 +397,7 @@ function Connection() { // связной
         }
     }
 
-    function showAllertMessage(txt, error = null) { // функция показа ошибки, подказки пользователю
+    function showAllertMessage(txt, error = null) { 
         currentImage.style.display = 'none';
         menu.style.display = 'none';
         imageLoader.style.display = 'none'
@@ -502,22 +418,75 @@ function Connection() { // связной
 
     function wsOnMessage(e) {
         const wsData = JSON.parse(e.data);
-        if (wsData.pic) console.log(`Информация о картинке - `, wsData.pic);
-        if (wsData.comment) console.log(`Информация о комментах - `, wsData.comment);
-        if (wsData.mask) console.log(`Информация о маске - `, wsData.mask);
+        if (wsData.event === 'comment') fillFormHandle(wsData.comment);
+        if (wsData.event === 'mask') console.log('mask');
     }
-    this.openForm = function(e) { // активация формы при клике на изображения для добавления нового комментария
-        if (e.target !== workSpace.querySelector('canvas')) return; // проверяем, что событие пришло с области текущего изображения
-        if (storage.mainState !== 'comments') return; // разрешаем загружать комментарии только в режиме комментирования
+    this.setListenersToForm = function(el) {
+        const form = el;
+
+        form.querySelector('.comments__marker-checkbox').addEventListener('click', e => { 
+            worker.changeStateAllMarks(true); 
+        });
+
+        form.querySelector('.comments__submit').addEventListener('click', e => {
+            e.preventDefault();
+
+            form.querySelector('.loader').style.display = '';
+
+            const cords = form.getBoundingClientRect(); 
+            const message = form.querySelector('.comments__input').value;
+            const id = sessionStorage.getItem('currentId');
+
+            const body = 'message=' + encodeURIComponent(message) + 
+                '&left=' + encodeURIComponent(cords.left) +
+                '&top=' + encodeURIComponent(cords.top);
+
+            fetch(`https://neto-api.herokuapp.com/pic/${id}/comments`, { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: body
+                })
+                .then(data => data.json()) 
+                .then(json => { 
+                    form.querySelector('.loader').style.display = 'none';
+                    // fillFormServ(json);
+                })
+                .catch(error => console.log(error));
+
+            form.querySelector('.loader').style.disply = 'none';
+            form.querySelector('.comments__input').value = '';
+        });
+
+        form.querySelector('.comments__close').addEventListener('click', e => { 
+            e.preventDefault(); 
+            if (form.querySelector('.comments__input').value) { 
+                form.querySelector('.comments__marker-checkbox').checked = true; 
+                form.querySelector('.comments__marker-checkbox').disabled = true;
+
+            } else if (form.querySelector('.comment__message')) { 
+                form.querySelector('.comments__marker-checkbox').checked = false; 
+                form.querySelector('.comments__marker-checkbox').disabled = false;
+                worker.changeStateAllMarks(false); 
+
+            } else {
+                workSpace.removeChild(form);
+                worker.changeStateAllMarks(false); 
+            }
+        });
+    }
+
+    this.openForm = function(e) { 
+        if (e.target !== workSpace.querySelector('canvas')) return; 
+        if (storage.mainState !== 'comments') return; 
 
         const checkActiveForm = Array.from(workSpace.querySelectorAll('form'))
-            .find(comment => comment[0].checked); // проверяем налчие активированных форм отправки сообщения 
-        if (checkActiveForm) return; // если есть, то выходим из функции
-
-        worker.changeStateAllMarks(true) // деактивируем возможность открытия формт по нажатия на маркер
-
+            .find(comment => comment[0].checked); 
+        if (checkActiveForm) return;
+        worker.changeStateAllMarks(true) 
         const originalForm = worker.createElement(commentsFormTmpl());
-        setListenersToForm(originalForm);
+        connection.setListenersToForm(originalForm);
 
         originalForm.querySelector('.loader').style.display = 'none';
         originalForm.querySelector('.comments__marker-checkbox').checked = true;
@@ -526,9 +495,10 @@ function Connection() { // связной
         originalForm.style.left = `${e.clientX - 21}px`;
         originalForm.style.top = `${e.clientY}px`;
 
-        workSpace.appendChild(originalForm);
+        workSpace.appendChild(originalForm)
+                storage.currentComments.push(originalForm);
     }
-    this.getCurrentInfo = function(id) { // запрос к серверу на получение текущих данных по id
+    this.getCurrentInfo = function(id) { 
         fetch(`https://neto-api.herokuapp.com/pic/${id}`)
             .then(data => data.json())
             .then(json => {
@@ -537,29 +507,29 @@ function Connection() { // связной
             })
             .catch(error => console.log(error));
     }
-    this.onupload = function(e) { // загрузка изображения на сервер
-        const file = reviewFile(e); // передаём выбранный пользователем файл на проверку
+    this.onupload = function(e) { 
+        const file = reviewFile(e); 
         if (!file) return;
 
-        worker.removeAllCurrentComments(); // 'очищаем' поле приложения
+        worker.removeAllCurrentComments(); 
         menu.style.display = 'none';
         imageLoader.style.display = '';
         currentImage.style.display = 'none';
 
-        const formData = new FormData(); // готовим 'тело' сообщения для загрузки на сервер
+        const formData = new FormData(); 
         formData.append('title', file.name)
         formData.append('image', file);
 
-        fetch('https://neto-api.herokuapp.com/pic', { // выполняем запрос и загрузку
+        fetch('https://neto-api.herokuapp.com/pic', { 
                 body: formData,
                 method: 'POST'
             })
             .then(data => data.json())
             .then(json => {
                 const id = json.id;
-                sessionStorage.setItem('currentId', id); // получили айдишник загруженного изображения
+                sessionStorage.setItem('currentId', id); 
 
-                connection.startWebSocketConnect(id); // запускаем WebSocket
+                connection.startWebSocketConnect(id); 
 
                 currentImage.style.width = '';
                 currentImage.style.height = '';
@@ -568,23 +538,22 @@ function Connection() { // связной
             })
             .then(img => {
                 img.addEventListener('load', drawer.calculateCanvasSize);
-                // ссылка на текущее изображение
+                
                 link_to_share.setAttribute('value', `${window.location.origin}${window.location.pathname}?${sessionStorage.getItem('currentId')}`);
                 sessionStorage.setItem('currentImage', img.src);
                 imageLoader.style.display = 'none';
                 img.style.display = '';
 
-                storage.mainState = 'share'; // переключаем режим на "поделиться", меняем отображение меню в соответствии с режимом
+                storage.mainState = 'share'; 
                 storage.positionMenu;
             })
             .catch(error => console.log(error));
     }
-    this.startWebSocketConnect = function(id) { // WebSocket
+    this.startWebSocketConnect = function(id) { 
         const currentid = id;
         const ws = new WebSocket(`wss://neto-api.herokuapp.com/pic/${currentid}`);
 
         ws.addEventListener('message', wsOnMessage);
-        ws.addEventListener('laod', e => ws.send('test string'));
         ws.addEventListener('open', e => console.log('Установлено веб-сокет соединение'));
         ws.addEventListener('error', e => console.warn('Произошла ошибка - ', e.error));
         ws.addEventListener('close', e => {
@@ -592,30 +561,27 @@ function Connection() { // связной
             if (e.code === 1006) connection.startWebSocketConnect(`wss://neto-api.herokuapp.com/pic/${currentid}`);
         });
     }
-    this.showOrhideComments = function(e) { // перключатель показа/скрытия маркеров сообщений
+    this.showOrhideComments = function(e) { 
         if (e.target.value === 'on') storage.currentComments.forEach(comment => comment.style.display = 'block')
         if (e.target.value === 'off') storage.currentComments.forEach(comment => comment.style.display = 'none')
     }
 }
 
-/////////////////////////////////////////////////////////////////////
-////////////////////////////  CANVAS  ///////////////////////////////
-/////////////////////////////////////////////////////////////////////
-function CanvasDrawer() { // художник
+function CanvasDrawer() { 
     const canvas = document.createElement('canvas');
     const c = canvas.getContext('2d');
-    const lineSize = 4; // постоянная толщина пера
+    const lineSize = 4; 
+    
     let isDrawing = false;
-
+    
     workSpace.append(canvas);
-    listenToCanvas();
 
-    function listenToCanvas() {
-        canvas.addEventListener('click', connection.openForm);
-        canvas.addEventListener('mousemove', drawOnImage);
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mouseup', stopDrawing);
-    }
+    canvas.addEventListener('click', connection.openForm);
+    canvas.addEventListener('mousemove', drawOnImage);
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
 
     function stopDrawing() {
         isDrawing = false;
@@ -628,27 +594,17 @@ function CanvasDrawer() { // художник
         c.moveTo(e.clientX, e.clientY);
     }
 
-    function checkSelectedColor() { // определяем цвет пера
-        let selectedColor = Array.from(menu.querySelectorAll('.menu__color')).find(color => color.checked);
-
-        if (selectedColor.classList.contains('red')) c.strokeStyle = '#ea5d56';
-        if (selectedColor.classList.contains('yellow')) c.strokeStyle = '#f3d135';
-        if (selectedColor.classList.contains('green')) c.strokeStyle = '#6cbe47';
-        if (selectedColor.classList.contains('blue')) c.strokeStyle = '#53a7f5';
-        if (selectedColor.classList.contains('purple')) c.strokeStyle = '#b36ade';
-
-        return c.strokeStyle;
-    }
-
-    function drawOnImage(e) { // рисуем на холсте
-        c.lineWidth = 4;
-        c.strokeStyle = checkSelectedColor();
+    function drawOnImage(e) { 
         c.lineCap = c.lineJoin = 'round';
+        c.lineWidth = lineSize;
 
         if (storage.mainState === 'draw' && isDrawing) {
-            c.lineTo(e.clientX, e.clientY);
+            c.lineTo(e.clientX, e.clientY - 35);
             c.stroke();
         }
+    }
+    this.changeColor = function(e) {
+        c.strokeStyle = getComputedStyle(e.target.nextElementSibling).backgroundColor; 
     }
     this.calculateCanvasSize = function() {
         const img = currentImage
@@ -662,50 +618,40 @@ function CanvasDrawer() { // художник
     }
 }
 
-///////////////////////////////////////////////////////////////
-//////////////////  ИНИЦИАЛИЗАЦИЯ /////////////////////////////
-///////////////////////////////////////////////////////////////
-const workSpace = document.querySelector('.app'); // 'рабочая область' приложения
+const workSpace = document.querySelector('.app'); 
 
-const connection = new Connection(); // связной
-const drawer = new CanvasDrawer(); // художник
-const storage = new Storage(); // кладовщик
-const worker = new Worker(); // разнорабочий
+const connection = new Connection();
+const drawer = new CanvasDrawer();
+const storage = new Storage();
+const worker = new Worker();
 
-const menu = worker.createElement(menutTmpl()); // меню
+const menu = worker.createElement(menutTmpl());
 workSpace.prepend(menu);
 
-const imageLoader = document.querySelector('.image-loader'); // анимация загрузки
-const link_to_share = document.querySelector('.menu__url'); // ссылка 'поделиться'
-const forUserInfo = document.querySelector('.error'); // сообщение об ошибке
+const imageLoader = document.querySelector('.image-loader');
+const link_to_share = document.querySelector('.menu__url');
+const forUserInfo = document.querySelector('.error'); 
 
-const currentImage = document.createElement('img'); // текущее изображение
+const currentImage = document.createElement('img'); 
 
 
-////////////////////////////////////////////////////////////////////////////////////
-///////////////////// ОПРЕДЕЛЕНИЕ СТАТУСА ЗАПУСКА ПРИЛОЖЕНИЯ ///////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-if (sessionStorage.getItem('currentId')) { // запуск приложения с загруженным на сервер изображением
+if (sessionStorage.getItem('currentId')) { 
     storage.start_with_image();
 
-} else if (window.location.search) { // запуск приложения после перехода по ссылке, сгенерированной режимом 'Поделиться'
+} else if (window.location.search) { 
     imageLoader.style.display = '';
     menu.style.display = 'none';
 
-    const searchString = window.location.search; // помещаем в переменную айдишник изображения, загруженного на сервер
+    const searchString = window.location.search; 
     const id = searchString.slice(1);
 
-    connection.getCurrentInfo(id); // запрашиваем у сервера текущие данные по имеющемуся айдишнику
+    connection.getCurrentInfo(id); 
     sessionStorage.setItem('currentId', id);
 
 } else {
-    storage.initialization(); // 'первый запуск'
+    storage.initialization(); 
 }
 
-
-//////////////////////////////////////////////////////////////////
-//////////////////  MAIN_EVENT_LISTENERS  ////////////////////////
-//////////////////////////////////////////////////////////////////
 window.addEventListener('load', worker.moveMenu);
 window.addEventListener('load', worker.listenStateMenu);
 window.addEventListener('load', worker.listenLoadFile);
