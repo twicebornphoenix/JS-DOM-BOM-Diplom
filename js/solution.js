@@ -54,6 +54,11 @@ class App {
             if (target.classList.contains('new')) this.handleFileSelect();
         });
     }
+    setAppAreaEventListeners() {
+      this.node.addEventListener('mousemove', this.dragMenu)
+      this.node.addEventListener('dragover', e => e.preventDefault());
+      this.node.addEventListener('drop', this.DnDFileSelect)
+    }
     handleFileSelect() {
         const input = document.createElement('input');
         input.id = 'files';
@@ -72,6 +77,7 @@ class App {
     }
     waiting() {
         this.setMenuEventListeners();
+        this.setAppAreaEventListeners();
     }
     activateCurrentState(st) {
         const stateObj = JSON.parse(st);
