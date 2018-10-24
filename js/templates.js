@@ -2,7 +2,7 @@
 /////////////////////////// ЭЛЕМЕНТОВ ПРИЛОЖЕНИЯ //////////////
 
 // шаблон меню
-function menutTmpl(data) {
+function menuTmpl(data) {
     return {
         tag: 'ul',
         cls: ['menu'],
