@@ -1,7 +1,5 @@
-////////////////////// ШАБЛОНЫ ДИНАМИЧЕСКИ НАПОЛНЯЕМЫХ //////////////
-/////////////////////////// ЭЛЕМЕНТОВ ПРИЛОЖЕНИЯ //////////////
+'use strict';
 
-// шаблон меню
 function menuTmpl() {
     return {
         tag: 'ul',
@@ -242,7 +240,7 @@ function menuTmpl() {
         ]
     }
 }
-// шабон формы комментария
+
 function commentsFormTmpl() {
     return {
         tag: 'form',
@@ -314,7 +312,7 @@ function commentsFormTmpl() {
         ]
     }
 }
-// шаблон блока с текстом и датой комментария
+
 function commentMessageBlockTmpl() {
     return {
         tag: 'div',
