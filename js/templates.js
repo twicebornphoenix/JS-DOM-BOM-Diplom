@@ -1,19 +1,32 @@
 'use strict';
 
+function appWrapTmpl() {
+    return {
+        tag: 'div',
+        cls: 'wrap app',
+        attrs: {
+            'data-state': 'initial'
+        }
+    }
+}
+
 function menuTmpl() {
     return {
         tag: 'ul',
-        cls: ['menu'],
+        cls: 'menu',
         attrs: {
-            'data-state': ''
+            'data-state': 'initial'
         },
         childs: [{
                 tag: 'li',
-                cls: ['menu__item', 'drag']
+                cls: 'menu__item drag',
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'burger'],
+                cls: 'menu__item burger',
+                styles: {
+                    display: 'none'
+                },
                 childs: {
                     tag: 'i',
                     cls: ['burger-icon']
@@ -21,14 +34,14 @@ function menuTmpl() {
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'mode', 'new'],
+                cls: 'menu__item mode new',
                 childs: [{
                         tag: 'i',
-                        cls: ['menu__icon', 'new-icon']
+                        cls: 'menu__icon new-icon'
                     },
                     {
                         tag: 'span',
-                        cls: ['menu__item-title'],
+                        cls: 'menu__item-title',
                         childs: [
                             'Загрузить',
                             {
@@ -41,24 +54,24 @@ function menuTmpl() {
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'mode', 'comments'],
+                cls: 'menu__item mode comments',
                 attrs: {
                     'data-state': ''
                 },
                 childs: [{
                         tag: 'i',
-                        cls: ['menu__icon', 'comments-icon']
+                        cls: 'menu__icon comments-icon'
                     },
                     {
                         tag: 'span',
-                        cls: ['menu__item-title'],
+                        cls: 'menu__item-title',
                         childs: 'Комментарии'
                     }
                 ]
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'tool', 'comments-tools'],
+                cls: 'menu__item tool comments-tools',
                 childs: {
                     tag: 'span',
                     cls: ['menu__toggle-bg'],
@@ -75,7 +88,7 @@ function menuTmpl() {
                         },
                         {
                             tag: 'label',
-                            cls: ['menu__toggle-title', 'menu__toggle-title_on'],
+                            cls: 'menu__toggle-title menu__toggle-title_on',
                             attrs: {
                                 'for': 'comments-on'
                             },
@@ -88,7 +101,7 @@ function menuTmpl() {
                         },
                         {
                             tag: 'input',
-                            cls: ['menu__toggle'],
+                            cls: 'menu__toggle',
                             attrs: {
                                 'type': 'radio',
                                 'name': 'toggle',
@@ -98,7 +111,7 @@ function menuTmpl() {
                         },
                         {
                             tag: 'label',
-                            cls: ['menu__toggle-title', 'menu__toggle-title_off'],
+                            cls: 'menu__toggle-title menu__toggle-title_off',
                             attrs: {
                                 'for': 'comments-off'
                             },
@@ -118,27 +131,27 @@ function menuTmpl() {
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'mode', 'draw'],
+                cls: 'menu__item mode draw',
                 attrs: {
                     'data-state': ''
                 },
                 childs: [{
                         tag: 'i',
-                        cls: ['menu__icon', 'draw-icon']
+                        cls: 'menu__icon draw-icon'
                     },
                     {
                         tag: 'span',
-                        cls: ['menu__item-title'],
+                        cls: 'menu__item-title',
                         childs: 'Рисовать'
                     }
                 ]
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'tool', 'draw-tools'],
+                cls: 'menu__item tool draw-tools',
                 childs: [{
                         tag: 'input',
-                        cls: ['menu__color', 'red'],
+                        cls: 'menu__color red',
                         attrs: {
                             'type': 'radio',
                             'name': 'color',
@@ -150,7 +163,7 @@ function menuTmpl() {
                     },
                     {
                         tag: 'input',
-                        cls: ['menu__color', 'yellow'],
+                        cls: 'menu__color yellow',
                         attrs: {
                             'type': 'radio',
                             'name': 'color',
@@ -162,7 +175,7 @@ function menuTmpl() {
                     },
                     {
                         tag: 'input',
-                        cls: ['menu__color', 'green'],
+                        cls: 'menu__color green',
                         attrs: {
                             'type': 'radio',
                             'name': 'color',
@@ -175,7 +188,7 @@ function menuTmpl() {
                     },
                     {
                         tag: 'input',
-                        cls: ['menu__color', 'blue'],
+                        cls: 'menu__color blue',
                         attrs: {
                             'type': 'radio',
                             'name': 'color',
@@ -187,7 +200,7 @@ function menuTmpl() {
                     },
                     {
                         tag: 'input',
-                        cls: ['menu__color', 'purple'],
+                        cls: 'menu__color purple',
                         attrs: {
                             'type': 'radio',
                             'name': 'color',
@@ -201,27 +214,27 @@ function menuTmpl() {
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'mode', 'share'],
+                cls: 'menu__item mode share',
                 attrs: {
                     'data-state': ''
                 },
                 childs: [{
                         tag: 'i',
-                        cls: ['menu__icon', 'share-icon']
+                        cls: 'menu__icon share-icon'
                     },
                     {
                         tag: 'span',
-                        cls: ['menu__item-title'],
+                        cls: 'menu__item-title',
                         childs: 'Поделиться'
                     }
                 ]
             },
             {
                 tag: 'li',
-                cls: ['menu__item', 'tool', 'share-tools'],
+                cls: 'menu__item tool share-tools',
                 childs: [{
                         tag: 'input',
-                        cls: ['menu__url'],
+                        cls: 'menu__url',
                         attrs: {
                             'type': 'text',
                             'value': 'https://somelink'
@@ -229,7 +242,7 @@ function menuTmpl() {
                     },
                     {
                         tag: 'input',
-                        cls: ['menu_copy'],
+                        cls: 'menu_copy',
                         attrs: {
                             'type': 'button',
                             'value': 'Копировать'
