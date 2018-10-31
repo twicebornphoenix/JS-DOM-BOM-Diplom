@@ -1,20 +1,32 @@
-'use strict';
-
 function createElement(obj) {
-        if (Array.isArray(obj)) {
-            return obj.reduce((f, el) => {
-                f.append(createElement(el));
+    'use strict';
+    if (Array.isArray(obj)) {
 
-                return f;
-            }, document.createDocumentFragment());
-        }
-        if (typeof obj === 'string') return document.createTextNode(obj);
-        const el = document.createElement(obj.tag);
+        return obj.reduce(function (f, el) {
+            f.append(createElement(el));
 
-        if (obj.cls) el.className = obj.cls;
-        if (obj.styles) Object.assign(el.style, obj.styles)
-        if (obj.attrs) Object.keys(obj.attrs).forEach(key => el.setAttribute(key, obj.attrs[key]));
-        if (obj.childs) el.appendChild(createElement(obj.childs));
+            return f;
+        }, document.createDocumentFragment());
+    }
 
-        return el;
+    if (typeof obj === 'string') {
+        return document.createTextNode(obj);
+    }
+
+    const el = document.createElement(obj.tag);
+
+    if (obj.cls) {
+        el.className = obj.cls;
+    }
+    if (obj.styles) {
+        Object.assign(el.style, obj.styles);
+    }
+    if (obj.attrs) {
+        Object.keys(obj.attrs).forEach((key) => el.setAttribute(key, obj.attrs[key]));
+    }
+    if (obj.childs) {
+        el.appendChild(createElement(obj.childs));
+    }
+
+    return el;
 }
