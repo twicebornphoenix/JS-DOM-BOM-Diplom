@@ -28,7 +28,7 @@ function menuTmpl() {
             },
             childs: {
                 tag: 'i',
-                cls: ['burger-icon']
+                cls: 'burger-icon'
             }
         }, {
             tag: 'li',
@@ -219,29 +219,79 @@ function menuTmpl() {
     };
 }
 
+function errorTmpl() {
+    'use strict';
+    return {
+        tag: 'div',
+        cls: 'error',
+        styles: {
+            display: 'none'
+        },
+        childs: [{
+            tag: 'h4',
+            cls: 'error__header',
+            childs: 'Ошибка'
+        }, {
+            tag: 'p',
+            cls: 'error__message',
+            childs: 'Неверный формат файла. Пожалуйста, выберите изображение в формате .jpg или .png.'
+        }]
+    };
+}
+
+function imageLoaderTmpl() {
+    'use strict';
+    return {
+        tag: 'div',
+        cls: 'image-loader',
+        styles: {
+            display: 'none'
+        },
+        childs: [{
+            tag: 'div',
+            cls: 'loader',
+            childs: [{
+                tag: 'span'
+            }, {
+                tag: 'span'
+            }, {
+                tag: 'span'
+            }, {
+                tag: 'span'
+            }, {
+                tag: 'span'
+            }]
+        }, {
+            tag: 'p',
+            cls: 'image-loader__message',
+            childs: 'Загружаю изображение...'
+        }]
+    };
+}
+
 function commentsFormTmpl() {
     'use strict';
     return {
         tag: 'form',
-        cls: ['comments__form'],
+        cls: 'comments__form',
         childs: [{
             tag: 'span',
-            cls: ['comments__marker']
+            cls: 'comments__marker'
         }, {
             tag: 'input',
-            cls: ['comments__marker-checkbox'],
+            cls: 'comments__marker-checkbox',
             attrs: {
                 type: 'checkbox'
             }
         }, {
             tag: 'div',
-            cls: ['comments__body'],
+            cls: 'comments__body',
             childs: [{
                 tag: 'div',
-                cls: ['comment'],
+                cls: 'comment',
                 childs: {
                     tag: 'div',
-                    cls: ['loader'],
+                    cls: 'loader',
                     childs: [{
                         tag: 'span'
                     }, {
@@ -256,21 +306,21 @@ function commentsFormTmpl() {
                 }
             }, {
                 tag: 'textarea',
-                cls: ['comments__input'],
+                cls: 'comments__input',
                 attrs: {
                     type: 'text',
                     placeholder: 'Напишите ответ...'
                 }
             }, {
                 tag: 'input',
-                cls: ['comments__close'],
+                cls: 'comments__close',
                 attrs: {
                     type: 'button',
                     value: 'Закрыть'
                 }
             }, {
                 tag: 'input',
-                cls: ['comments__submit'],
+                cls: 'comments__submit',
                 attrs: {
                     type: 'submit',
                     value: 'Отправить'
@@ -284,14 +334,14 @@ function commentMessageBlockTmpl() {
     'use strict';
     return {
         tag: 'div',
-        cls: ['comment'],
+        cls: 'comment',
         childs: [{
             tag: 'p',
-            cls: ['comment__time'],
+            cls: 'comment__time',
             childs: ''
         }, {
             tag: 'p',
-            cls: ['comment__message'],
+            cls: 'comment__message',
             childs: ''
         }]
     };
